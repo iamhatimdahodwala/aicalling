@@ -2,29 +2,29 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from vapi.assistants.types.update_assistant_dto_model import UpdateAssistantDtoModel
 from vapi.types.open_ai_message import OpenAiMessage
 from vapi.types.open_ai_message_role import OpenAiMessageRole
 from vapi.types.open_ai_model import OpenAiModel
 
-from ..services.vapi_client import get_vapi_client
+from ..services.vapi_client import get_vapi_client_from_request
 
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 
 
 @router.get("")
-def list_agents() -> List[Dict[str, Any]]:
-	client = get_vapi_client()
+def list_agents(request: Request) -> List[Dict[str, Any]]:
+	client = get_vapi_client_from_request(request)
 	agents = client.assistants.list()
 	return [a.dict() for a in agents]
 
 
 @router.get("/{agent_id}")
-def get_agent(agent_id: str) -> Dict[str, Any]:
-	client = get_vapi_client()
+def get_agent(agent_id: str, request: Request) -> Dict[str, Any]:
+	client = get_vapi_client_from_request(request)
 	try:
 		assistant = client.assistants.get(agent_id)
 		return assistant.dict()
@@ -33,8 +33,8 @@ def get_agent(agent_id: str) -> Dict[str, Any]:
 
 
 @router.get("/{agent_id}/system-prompt")
-def get_system_prompt(agent_id: str) -> Dict[str, Any]:
-	client = get_vapi_client()
+def get_system_prompt(agent_id: str, request: Request) -> Dict[str, Any]:
+	client = get_vapi_client_from_request(request)
 	assistant = client.assistants.get(agent_id)
 	model = assistant.model
 	if model is None:
@@ -50,12 +50,12 @@ def get_system_prompt(agent_id: str) -> Dict[str, Any]:
 
 
 @router.put("/{agent_id}/system-prompt")
-def update_system_prompt(agent_id: str, prompt: str):
+def update_system_prompt(agent_id: str, prompt: str, request: Request):
 	"""Replace the assistant's system prompt for OpenAI-like models.
 
 	We update assistant.model.messages, preserving other fields.
 	"""
-	client = get_vapi_client()
+	client = get_vapi_client_from_request(request)
 	assistant = client.assistants.get(agent_id)
 	model = assistant.model
 	if model is None:
@@ -75,12 +75,12 @@ def update_system_prompt(agent_id: str, prompt: str):
 
 
 @router.put("/{agent_id}/knowledge-base")
-def update_knowledge_base(agent_id: str, knowledge_base_id: Optional[str] = None):
+def update_knowledge_base(agent_id: str, knowledge_base_id: Optional[str] = None, request: Request):
 	"""Point the assistant model to a specific knowledge base by ID.
 
 	This sets assistant.model.knowledgeBaseId. For transient KBs, a separate flow is needed.
 	"""
-	client = get_vapi_client()
+	client = get_vapi_client_from_request(request)
 	assistant = client.assistants.get(agent_id)
 	model = assistant.model
 	if model is None:
@@ -97,8 +97,8 @@ def update_knowledge_base(agent_id: str, knowledge_base_id: Optional[str] = None
 
 
 @router.get("/{agent_id}/kb")
-def get_assistant_kb(agent_id: str) -> Dict[str, Any]:
-	client = get_vapi_client()
+def get_assistant_kb(agent_id: str, request: Request) -> Dict[str, Any]:
+	client = get_vapi_client_from_request(request)
 	assistant = client.assistants.get(agent_id)
 	model = assistant.model
 	if model is None:

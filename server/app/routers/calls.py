@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 from pydantic import BaseModel
 from openpyxl import load_workbook
 
@@ -11,7 +11,7 @@ from vapi.types.create_customer_dto import CreateCustomerDto
 from vapi.types.schedule_plan import SchedulePlan
 from vapi.types.assistant_overrides import AssistantOverrides
 
-from ..services.vapi_client import get_vapi_client
+from ..services.vapi_client import get_vapi_client, get_vapi_client_from_request
 from ..main import settings
 import httpx
 
@@ -20,8 +20,8 @@ router = APIRouter(prefix="/api/calls", tags=["calls"])
 
 
 @router.get("")
-def list_calls(limit: int = 100, status: Optional[str] = None) -> List[Dict[str, Any]]:
-	client = get_vapi_client()
+def list_calls(limit: int = 100, status: Optional[str] = None, request: Request = None) -> List[Dict[str, Any]]:
+	client = get_vapi_client_from_request(request) if request is not None else get_vapi_client()
 	calls = client.calls.list(limit=limit)
 	items = [c.dict() for c in calls]
 	if status:
@@ -31,8 +31,8 @@ def list_calls(limit: int = 100, status: Optional[str] = None) -> List[Dict[str,
 
 
 @router.get("/{call_id}")
-def get_call(call_id: str) -> Dict[str, Any]:
-	client = get_vapi_client()
+def get_call(call_id: str, request: Request) -> Dict[str, Any]:
+	client = get_vapi_client_from_request(request)
 	try:
 		call = client.calls.get(call_id)
 		return call.dict()
@@ -41,8 +41,8 @@ def get_call(call_id: str) -> Dict[str, Any]:
 
 
 @router.get("/{call_id}/artifacts")
-def get_call_artifacts(call_id: str) -> Dict[str, Any]:
-	client = get_vapi_client()
+def get_call_artifacts(call_id: str, request: Request) -> Dict[str, Any]:
+	client = get_vapi_client_from_request(request)
 	call = client.calls.get(call_id)
 	artifact = (call.artifact or {}).dict() if hasattr(call, "artifact") and call.artifact is not None else {}
 	return {
@@ -55,12 +55,12 @@ def get_call_artifacts(call_id: str) -> Dict[str, Any]:
 
 
 @router.post("/{call_id}/terminate")
-def terminate_call(call_id: str) -> Dict[str, Any]:
+def terminate_call(call_id: str, request: Request) -> Dict[str, Any]:
 	"""Terminate a call if possible by deleting it.
 
 	Depending on provider/state, this may end the active call or remove the record.
 	"""
-	client = get_vapi_client()
+	client = get_vapi_client_from_request(request)
 	try:
 		resp = client.calls.delete(call_id)
 		return resp.dict()

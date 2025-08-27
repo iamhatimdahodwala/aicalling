@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 import httpx
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 
-from ..services.vapi_client import get_vapi_client
+from ..services.vapi_client import get_vapi_client_from_request
 from ..config import settings
 
 
@@ -13,8 +13,8 @@ router = APIRouter(prefix="/api/kb", tags=["knowledge-base"])
 
 
 @router.get("")
-def list_kb() -> List[Dict[str, Any]]:
-	client = get_vapi_client()
+def list_kb(request: Request) -> List[Dict[str, Any]]:
+	client = get_vapi_client_from_request(request)
 	items = client.knowledge_bases.list()
 	return [i.dict() for i in items]
 

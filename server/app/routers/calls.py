@@ -16,10 +16,14 @@ router = APIRouter(prefix="/api/calls", tags=["calls"])
 
 
 @router.get("")
-def list_calls(limit: int = 100) -> List[Dict[str, Any]]:
+def list_calls(limit: int = 100, status: Optional[str] = None) -> List[Dict[str, Any]]:
 	client = get_vapi_client()
 	calls = client.calls.list(limit=limit)
-	return [c.dict() for c in calls]
+	items = [c.dict() for c in calls]
+	if status:
+		status_lower = status.lower()
+		items = [c for c in items if (c.get("status") or "").lower() == status_lower]
+	return items
 
 
 @router.get("/{call_id}")
@@ -44,6 +48,41 @@ def get_call_artifacts(call_id: str) -> Dict[str, Any]:
 		"videoRecordingUrl": artifact.get("videoRecordingUrl"),
 		"recording": artifact.get("recording"),
 	}
+
+
+@router.post("/{call_id}/terminate")
+def terminate_call(call_id: str) -> Dict[str, Any]:
+	"""Terminate a call if possible by deleting it.
+
+	Depending on provider/state, this may end the active call or remove the record.
+	"""
+	client = get_vapi_client()
+	try:
+		resp = client.calls.delete(call_id)
+		return resp.dict()
+	except Exception as e:
+		raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{call_id}/escalate")
+def escalate_call(call_id: str, destination: Optional[str] = None) -> Dict[str, Any]:
+	"""Placeholder escalate.
+
+	In many setups, escalation/transfers are implemented via tools or webhooks.
+	This endpoint is a no-op that returns 200 so the UI can integrate with your org-specific flow.
+	"""
+	return {"ok": True, "callId": call_id, "destination": destination}
+
+
+@router.post("/{call_id}/context")
+def update_live_context(call_id: str, text: str) -> Dict[str, Any]:
+	"""Update context during live call.
+
+	Note: Real-time context updates are typically handled via the monitor control API/websocket.
+	This endpoint stores your intent and can be wired to your server webhook or control channel.
+	"""
+	# For now, simply return the payload to confirm receipt.
+	return {"ok": True, "callId": call_id, "text": text}
 
 
 @router.get("/schedule/template")

@@ -2,6 +2,9 @@ import { BrowserRouter, Link, Route, Routes, useNavigate } from 'react-router-do
 import { useQuery } from '@tanstack/react-query'
 import { api } from './lib/api'
 import './App.css'
+import CallManagementPage from './pages/CallManagementPage'
+import AgentsPage from './pages/AgentsPage'
+import CallsPage from './pages/CallsPage'
 
 function Agents() {
 	const { data } = useQuery({ queryKey: ['agents'], queryFn: api.listAgents })
@@ -66,12 +69,14 @@ function App() {
 				<Link to="/">Dashboard</Link>
 				<Link to="/agents">Agents</Link>
 				<Link to="/calls">Calls</Link>
+				<Link to="/call-management">Call Management</Link>
 			</header>
 			<Routes>
 				<Route path="/" element={<div>Vapi AI Call Management</div>} />
-				<Route path="/agents" element={<Agents />} />
-				<Route path="/calls" element={<Calls />} />
+				<Route path="/agents" element={<AgentsPage />} />
+				<Route path="/calls" element={<CallsPage />} />
 				<Route path="/calls/:id" element={<CallDetailRoute />} />
+				<Route path="/call-management" element={<CallManagementPage />} />
 			</Routes>
 		</BrowserRouter>
 	)

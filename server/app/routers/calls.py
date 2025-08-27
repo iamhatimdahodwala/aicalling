@@ -185,7 +185,7 @@ class ScheduleSingleBody(BaseModel):
 	number: str
 	earliest_at: datetime
 	latest_at: datetime | None = None
-    context: str | None = None
+	context: str | None = None
 
 
 @router.post("/schedule/single")

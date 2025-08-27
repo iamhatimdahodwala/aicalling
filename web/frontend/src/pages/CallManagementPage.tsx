@@ -2,7 +2,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useMemo, useState } from 'react'
 import { Box, Button, Heading, HStack, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Textarea, VStack, Link as CLink } from '@chakra-ui/react'
+import { Slider, SliderTrack, SliderFilledTrack, SliderThumb, Switch } from '@chakra-ui/react'
 import StatusBadge from '../components/StatusBadge'
+import { usePcmWebSocketAudio } from '../hooks/usePcmWebSocketAudio'
 
 type Tab = 'active' | 'queued' | 'all'
 
@@ -93,6 +95,8 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 	const [context, setContext] = useState('')
 
 	const listenAvailable = Boolean((monitor as any)?.monitor?.listenUrl)
+    const listenUrl = (monitor as any)?.monitor?.listenUrl as string | undefined
+    const { connected, muted, volume, setMuted, setVolume, connect, disconnect } = usePcmWebSocketAudio(listenUrl)
 
 	return (
 		<VStack align="stretch" spacing={3} mt={3}>
@@ -124,7 +128,24 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 				<Heading size="xs" mb={1}>Quick Actions</Heading>
 				<VStack align="stretch">
 					{listenAvailable ? (
-						<CLink href={(monitor as any).monitor.listenUrl} isExternal>Listen In</CLink>
+						<>
+							<CLink href={(monitor as any).monitor.listenUrl} isExternal>Listen In (open in provider)</CLink>
+							<HStack>
+								<Button size="sm" onClick={() => connected ? disconnect() : connect()}>{connected ? 'Stop' : 'Listen in app'}</Button>
+								<HStack>
+									<Text fontSize="sm">Mute</Text>
+									<Switch isChecked={muted} onChange={e => setMuted(e.target.checked)} />
+								</HStack>
+							</HStack>
+							<HStack>
+								<Text fontSize="sm" w="60px">Volume</Text>
+								<Slider value={Math.round(volume * 100)} onChange={(v)=>setVolume(v/100)} w="200px">
+									<SliderTrack><SliderFilledTrack /></SliderTrack>
+									<SliderThumb />
+								</Slider>
+							</HStack>
+							<Text fontSize="xs" opacity={0.7}>Status: {connected ? 'connected' : 'idle'}</Text>
+						</>
 					) : (
 						<Text opacity={0.7}>Listen In not enabled. Turn on assistant.monitorPlan.listenEnabled.</Text>
 					)}

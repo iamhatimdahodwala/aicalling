@@ -9,6 +9,7 @@ from openpyxl import load_workbook
 
 from vapi.types.create_customer_dto import CreateCustomerDto
 from vapi.types.schedule_plan import SchedulePlan
+from vapi.types.assistant_overrides import AssistantOverrides
 
 from ..services.vapi_client import get_vapi_client
 from ..main import settings
@@ -184,6 +185,7 @@ class ScheduleSingleBody(BaseModel):
 	number: str
 	earliest_at: datetime
 	latest_at: datetime | None = None
+    context: str | None = None
 
 
 @router.post("/schedule/single")
@@ -202,6 +204,7 @@ def schedule_single(body: ScheduleSingleBody) -> Dict[str, Any]:
 		assistant_id=body.assistant_id,
 		customers=[customer],
 		schedule_plan=schedule,
+		assistant_overrides=AssistantOverrides(variable_values={"context": body.context} if body.context else None),
 	)
 	return resp.dict()
 

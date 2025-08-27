@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Body
 from pydantic import BaseModel
 from openpyxl import load_workbook
 
@@ -11,8 +11,8 @@ from vapi.types.create_customer_dto import CreateCustomerDto
 from vapi.types.schedule_plan import SchedulePlan
 from vapi.types.assistant_overrides import AssistantOverrides
 
-from ..services.vapi_client import get_vapi_client, get_vapi_client_from_request
-from ..main import settings
+from ..services.vapi_client import get_vapi_client_from_request
+from ..config import settings
 import httpx
 
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/calls", tags=["calls"])
 
 @router.get("")
 def list_calls(limit: int = 100, status: Optional[str] = None, request: Request = None) -> List[Dict[str, Any]]:
-	client = get_vapi_client_from_request(request) if request is not None else get_vapi_client()
+	client = get_vapi_client_from_request(request)
 	calls = client.calls.list(limit=limit)
 	items = [c.dict() for c in calls]
 	if status:
@@ -85,13 +85,19 @@ def escalate_call(call_id: str, destination: Optional[str] = None) -> Dict[str, 
 
 
 @router.post("/{call_id}/context")
-def update_live_context(call_id: str, text: str) -> Dict[str, Any]:
+def update_live_context(call_id: str, request: Request, body: Any = Body(...)) -> Dict[str, Any]:
 	"""Update context during live call.
 
 	Note: Real-time context updates are typically handled via the monitor control API/websocket.
 	This endpoint stores your intent and can be wired to your server webhook or control channel.
 	"""
-	# For now, simply return the payload to confirm receipt.
+	# Accept either a raw JSON string or an object with { text }
+	if isinstance(body, str):
+		text = body
+	elif isinstance(body, dict):
+		text = body.get("text") or body.get("message") or ""
+	else:
+		text = ""
 	return {"ok": True, "callId": call_id, "text": text}
 
 
@@ -114,13 +120,14 @@ def download_schedule_template() -> Dict[str, Any]:
 @router.post("/schedule/upload")
 async def schedule_calls_from_excel(
 	assistant_id: str,
+	request: Request,
 	file: UploadFile = File(...),
 ):
 	"""Upload Excel with headers: name, number, earliest_at, latest_at (ISO8601).
 
 	Creates batch outbound calls via client.calls.create(customers=[...], schedule_plan=...).
 	"""
-	client = get_vapi_client()
+	client = get_vapi_client_from_request(request)
 	content = await file.read()
 	wb = load_workbook(filename=(file.filename or "uploaded.xlsx"), data_only=True)
 	# openpyxl requires a file path or file-like object; since FastAPI gives bytes, reopen via BytesIO
@@ -189,12 +196,12 @@ class ScheduleSingleBody(BaseModel):
 
 
 @router.post("/schedule/single")
-def schedule_single(body: ScheduleSingleBody) -> Dict[str, Any]:
+def schedule_single(body: ScheduleSingleBody, request: Request) -> Dict[str, Any]:
 	"""Schedule a single outbound call for a customer.
 
 	Body: { assistant_id, name?, number, earliest_at, latest_at? }
 	"""
-	client = get_vapi_client()
+	client = get_vapi_client_from_request(request)
 	schedule = SchedulePlan(
 		earliest_at=body.earliest_at,
 		latest_at=body.latest_at,

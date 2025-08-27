@@ -5,8 +5,7 @@ import { Box, Button, FormControl, FormLabel, Heading, HStack, Input, Select, Te
 
 export default function SchedulePage() {
 	const toast = useToast()
-	const { data: template } = useQuery({ queryKey: ['template'], queryFn: api.getScheduleTemplate as any })
-	const { data: agents = [] } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
+	const { data: agents = [], isLoading: agentsLoading } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
 	const [assistantId, setAssistantId] = useState('')
 	const [name, setName] = useState('')
 	const [number, setNumber] = useState('')
@@ -39,6 +38,7 @@ export default function SchedulePage() {
 							<Select placeholder="Select assistant" value={assistantId} onChange={e => setAssistantId(e.target.value)}>
 								{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.id}</option>)}
 							</Select>
+							{agentsLoading && <Text opacity={0.7}>Loading assistants…</Text>}
 						</FormControl>
 						<FormControl>
 							<FormLabel>Customer Name (optional)</FormLabel>
@@ -74,10 +74,10 @@ export default function SchedulePage() {
 							<Select placeholder="Select assistant" value={assistantId} onChange={e => setAssistantId(e.target.value)}>
 								{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.id}</option>)}
 							</Select>
+							{agentsLoading && <Text opacity={0.7}>Loading assistants…</Text>}
 						</FormControl>
 						<Input type="file" ref={fileRef} accept=".xlsx" />
 						<Button onClick={onUpload}>Upload & Schedule</Button>
-						{template && <Box as="pre" whiteSpace="pre-wrap" opacity={0.6}>{JSON.stringify(template, null, 2)}</Box>}
 					</VStack>
 				</Box>
 			</HStack>

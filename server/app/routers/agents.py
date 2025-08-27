@@ -75,7 +75,7 @@ def update_system_prompt(agent_id: str, prompt: str, request: Request):
 
 
 @router.put("/{agent_id}/knowledge-base")
-def update_knowledge_base(agent_id: str, knowledge_base_id: Optional[str] = None, request: Request):
+def update_knowledge_base(agent_id: str, request: Request, knowledge_base_id: Optional[str] = None):
 	"""Point the assistant model to a specific knowledge base by ID.
 
 	This sets assistant.model.knowledgeBaseId. For transient KBs, a separate flow is needed.

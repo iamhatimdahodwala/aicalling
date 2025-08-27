@@ -10,6 +10,7 @@ from .routers import agents, calls, live
 class Settings(BaseSettings):
 	# Vapi API token
 	VAPI_TOKEN: str = ""
+	ESCALATE_WEBHOOK_URL: str = ""
 
 	# Allowed CORS origins for the frontend
 	CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useMemo, useState } from 'react'
+import { Box, Button, Heading, HStack, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Textarea, VStack, Link as CLink } from '@chakra-ui/react'
 
 type Tab = 'active' | 'queued' | 'all'
 
@@ -20,62 +21,68 @@ export default function CallManagementPage() {
 	}, [calls, tab])
 
 	return (
-		<div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 360px', gap: 16 }}>
+		<HStack align="start" spacing={4}>
 			{/* Left agents panel */}
-			<div style={{ borderRight: '1px solid #eee', paddingRight: 12 }}>
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-					<h3>AI Agents</h3>
-					<span>{agents?.length ?? 0}</span>
-				</div>
-				<ul style={{ maxHeight: 360, overflow: 'auto' }}>
+			<Box borderRight="1px" borderColor="whiteAlpha.300" pr={3} minW="260px">
+				<HStack justify="space-between" align="center">
+					<Heading size="sm">AI Agents</Heading>
+					<Text opacity={0.7}>{agents?.length ?? 0}</Text>
+				</HStack>
+				<VStack align="stretch" maxH="360px" overflowY="auto" mt={3} spacing={2}>
 					{agents.map((a: any) => (
-						<li key={a.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
-							<span>{a.name || 'Untitled'}</span>
-							<span style={{ color: '#888' }}>id:{a.id.slice(0, 6)}…</span>
-						</li>
+						<HStack key={a.id} justify="space-between" px={2} py={1} _hover={{ bg: 'whiteAlpha.100' }} borderRadius="md">
+							<Text noOfLines={1}>{a.name || 'Untitled'}</Text>
+							<Text opacity={0.6}>id:{a.id.slice(0, 6)}…</Text>
+						</HStack>
 					))}
-				</ul>
-			</div>
+				</VStack>
+			</Box>
 
 			{/* Center calls table with tabs */}
-			<div>
-				<div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-					<button onClick={() => setTab('active')} disabled={tab === 'active'}>Active Calls</button>
-					<button onClick={() => setTab('queued')} disabled={tab === 'queued'}>Queue</button>
-					<button onClick={() => setTab('all')} disabled={tab === 'all'}>All</button>
-				</div>
-				<table style={{ width: '100%' }}>
-					<thead>
-						<tr>
-							<th>Caller</th>
-							<th>Agent</th>
-							<th>Duration</th>
-							<th>Status</th>
-						</tr>
-					</thead>
-					<tbody>
-						{filtered.map((c: any) => (
-							<tr key={c.id} onClick={() => setSelected(c)} style={{ cursor: 'pointer' }}>
-								<td>{c.customer?.name || c.customer?.number || c.id}</td>
-								<td>{c.assistantId || '-'}</td>
-								<td>{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</td>
-								<td>{c.status}</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+			<Box flex="1">
+				<Tabs index={['active','queued','all'].indexOf(tab)} onChange={(i)=>setTab(['active','queued','all'][i] as Tab)}>
+					<TabList>
+						<Tab>Active Calls</Tab>
+						<Tab>Queue</Tab>
+						<Tab>All</Tab>
+					</TabList>
+					<TabPanels>
+						<TabPanel px={0}>
+							<VStack align="stretch" spacing={0} border="1px" borderColor="whiteAlpha.300" borderRadius="md" overflow="hidden">
+								<HStack bg="whiteAlpha.200" px={3} py={2}>
+									<Text flex="1">Caller</Text>
+									<Text flex="1">Agent</Text>
+									<Text w="120px">Duration</Text>
+									<Text w="120px">Status</Text>
+								</HStack>
+								<VStack align="stretch" spacing={0}>
+									{filtered.map((c: any) => (
+										<HStack key={c.id} px={3} py={2} _hover={{ bg: 'whiteAlpha.100' }} onClick={()=>setSelected(c)} cursor="pointer">
+											<Text flex="1" noOfLines={1}>{c.customer?.name || c.customer?.number || c.id}</Text>
+											<Text flex="1" noOfLines={1}>{c.assistantId || '-'}</Text>
+											<Text w="120px">{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Text>
+											<Text w="120px">{c.status}</Text>
+										</HStack>
+									))}
+								</VStack>
+							</VStack>
+						</TabPanel>
+						<TabPanel px={0}><Text opacity={0.7}>Queue view mirrors Active; populate when statuses are queued.</Text></TabPanel>
+						<TabPanel px={0}><Text opacity={0.7}>All calls listed above when tab is All.</Text></TabPanel>
+					</TabPanels>
+				</Tabs>
+			</Box>
 
 			{/* Right details panel */}
-			<div style={{ borderLeft: '1px solid #eee', paddingLeft: 12 }}>
-				<h3>Call Details</h3>
+			<Box borderLeft="1px" borderColor="whiteAlpha.300" pl={3} minW="360px">
+				<Heading size="sm">Call Details</Heading>
 				{selected ? (
 					<CallDetails call={selected} onRefresh={() => qc.invalidateQueries({ queryKey: ['calls'] })} />
 				) : (
-					<div>Select a call to view details</div>
+					<Text opacity={0.7}>Select a call to view details</Text>
 				)}
-			</div>
-		</div>
+			</Box>
+		</HStack>
 	)
 }
 
@@ -84,43 +91,47 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 	const { data: monitor = {} as any } = useQuery<any>({ queryKey: ['monitor', call.id], queryFn: () => api.getLiveSessionInfo(call.id) as any })
 	const [context, setContext] = useState('')
 
+	const listenAvailable = Boolean((monitor as any)?.monitor?.listenUrl)
+
 	return (
-		<div style={{ display: 'grid', gap: 12 }}>
-			<div>
-				<div><b>Caller:</b> {call.customer?.name || call.customer?.number || '-'}</div>
-				<div><b>Assigned Agent:</b> {call.assistantId || '-'}</div>
-				<div><b>Status:</b> {call.status}</div>
-			</div>
+		<VStack align="stretch" spacing={3} mt={3}>
+			<Box>
+				<Text><b>Caller:</b> {call.customer?.name || call.customer?.number || '-'}</Text>
+				<Text><b>Assigned Agent:</b> {call.assistantId || '-'}</Text>
+				<Text><b>Status:</b> {call.status}</Text>
+			</Box>
 
-			<div>
-				<h4>Context</h4>
-				<textarea rows={4} value={context} onChange={e => setContext(e.target.value)} style={{ width: '100%' }} placeholder="Send real-time context updates to the agent..." />
-				<button onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(context) }); }}>Update Context</button>
-			</div>
+			<Box>
+				<Heading size="xs" mb={1}>Context</Heading>
+				<Textarea rows={4} value={context} onChange={e => setContext(e.target.value)} placeholder="Send real-time context updates to the agent..." />
+				<Button size="sm" mt={2} onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(context) }); }}>Update Context</Button>
+			</Box>
 
-			<div>
-				<h4>Live Transcript</h4>
+			<Box>
+				<Heading size="xs" mb={1}>Live Transcript</Heading>
 				{artifacts?.transcript ? (
-					<pre style={{ whiteSpace: 'pre-wrap', maxHeight: 260, overflow: 'auto' }}>{artifacts.transcript}</pre>
-				) : <div>Transcript will appear for completed calls with artifacts enabled.</div>}
-			</div>
+					<Box as="pre" whiteSpace="pre-wrap" maxH="260px" overflowY="auto">{artifacts.transcript}</Box>
+				) : <Text opacity={0.7}>Transcript will appear for completed calls with artifacts enabled.</Text>}
+			</Box>
 
-			<div>
-				<h4>Recording</h4>
-				{artifacts?.recordingUrl ? <audio controls src={artifacts.recordingUrl} /> : <div>No recording available</div>}
-			</div>
+			<Box>
+				<Heading size="xs" mb={1}>Recording</Heading>
+				{artifacts?.recordingUrl ? <audio controls src={artifacts.recordingUrl} /> : <Text opacity={0.7}>No recording available</Text>}
+			</Box>
 
-			<div>
-				<h4>Quick Actions</h4>
-				<div style={{ display: 'grid', gap: 8 }}>
-					{(monitor as any)?.monitor?.listenUrl && (
-						<a href={(monitor as any).monitor.listenUrl} target="_blank">Listen In</a>
+			<Box>
+				<Heading size="xs" mb={1}>Quick Actions</Heading>
+				<VStack align="stretch">
+					{listenAvailable ? (
+						<CLink href={(monitor as any).monitor.listenUrl} isExternal>Listen In</CLink>
+					) : (
+						<Text opacity={0.7}>Listen In not enabled. Turn on assistant.monitorPlan.listenEnabled.</Text>
 					)}
-					<button onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/escalate`, { method: 'POST' }); }}>Escalate</button>
-					<button onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/terminate`, { method: 'POST' }); onRefresh(); }}>Terminate Call</button>
-				</div>
-			</div>
-		</div>
+					<Button size="sm" onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/escalate`, { method: 'POST' }); }}>Escalate</Button>
+					<Button size="sm" colorScheme="red" onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/terminate`, { method: 'POST' }); onRefresh(); }}>Terminate Call</Button>
+				</VStack>
+			</Box>
+		</VStack>
 	)
 }
 

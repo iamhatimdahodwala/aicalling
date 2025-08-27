@@ -10,6 +10,8 @@ from vapi.types.create_customer_dto import CreateCustomerDto
 from vapi.types.schedule_plan import SchedulePlan
 
 from ..services.vapi_client import get_vapi_client
+from ..main import settings
+import httpx
 
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
@@ -66,12 +68,18 @@ def terminate_call(call_id: str) -> Dict[str, Any]:
 
 @router.post("/{call_id}/escalate")
 def escalate_call(call_id: str, destination: Optional[str] = None) -> Dict[str, Any]:
-	"""Placeholder escalate.
+	"""Escalate by POST-ing to org webhook if configured.
 
-	In many setups, escalation/transfers are implemented via tools or webhooks.
-	This endpoint is a no-op that returns 200 so the UI can integrate with your org-specific flow.
+	Set ESCALATE_WEBHOOK_URL in env to forward this request with callId and destination.
 	"""
-	return {"ok": True, "callId": call_id, "destination": destination}
+	payload = {"callId": call_id, "destination": destination}
+	if settings.ESCALATE_WEBHOOK_URL:
+		try:
+			with httpx.Client(timeout=10) as client:
+				client.post(settings.ESCALATE_WEBHOOK_URL, json=payload)
+		except Exception as e:
+			raise HTTPException(status_code=502, detail=f"Escalate webhook failed: {e}")
+	return {"ok": True, **payload}
 
 
 @router.post("/{call_id}/context")

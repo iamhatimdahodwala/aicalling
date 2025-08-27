@@ -5,6 +5,8 @@ import { Box, Button, Heading, HStack, Tab, TabList, TabPanel, TabPanels, Tabs, 
 import { Slider, SliderTrack, SliderFilledTrack, SliderThumb, Switch } from '@chakra-ui/react'
 import StatusBadge from '../components/StatusBadge'
 import { usePcmWebSocketAudio } from '../hooks/usePcmWebSocketAudio'
+import { motion } from 'framer-motion'
+
 
 type Tab = 'active' | 'queued' | 'all'
 
@@ -37,12 +39,14 @@ export default function CallManagementPage() {
 					<Text opacity={0.7}>{agents?.length ?? 0}</Text>
 				</HStack>
 				<VStack align="stretch" maxH="360px" overflowY="auto" mt={3} spacing={2}>
-					{agents.map((a: any) => (
-						<HStack key={a.id} px={2} py={1} _hover={{ bg: 'whiteAlpha.100' }} borderRadius="md" spacing={2}>
-							<Box w="8px" h="8px" bg="green.400" borderRadius="full" flexShrink={0} />
-							<Text flex="1" noOfLines={1}>{a.name || 'Untitled'}</Text>
-							<Text opacity={0.6} fontSize="sm">{a.id.slice(0, 6)}…</Text>
-						</HStack>
+					{agents.map((a: any, idx: number) => (
+						<motion.div key={a.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 * idx }}>
+							<HStack px={2} py={1} _hover={{ bg: 'whiteAlpha.100' }} borderRadius="md" spacing={2}>
+								<Box w="8px" h="8px" bg="green.400" borderRadius="full" flexShrink={0} />
+								<Text flex="1" noOfLines={1}>{a.name || 'Untitled'}</Text>
+								<Text opacity={0.6} fontSize="sm">{a.id.slice(0, 6)}…</Text>
+							</HStack>
+						</motion.div>
 					))}
 				</VStack>
 			</Box>
@@ -65,13 +69,15 @@ export default function CallManagementPage() {
 									<Text w="120px">Status</Text>
 								</HStack>
 								<VStack align="stretch" spacing={0}>
-									{filtered.map((c: any) => (
-										<HStack key={c.id} px={3} py={2} _hover={{ bg: 'whiteAlpha.100' }} onClick={()=>setSelected(c)} cursor="pointer">
-											<Text flex="1" noOfLines={1}>{c.customer?.name || c.customer?.number || c.id}</Text>
-											<Text flex="1" noOfLines={1}>{c.assistantId || '-'}</Text>
-											<Text w="120px">{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Text>
-											<Box w="120px"><StatusBadge status={c.status} /></Box>
-										</HStack>
+									{filtered.map((c: any, idx: number) => (
+										<motion.div key={c.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 * idx }}>
+											<HStack px={3} py={2} _hover={{ bg: 'whiteAlpha.100' }} onClick={()=>setSelected(c)} cursor="pointer">
+												<Text flex="1" noOfLines={1}>{c.customer?.name || c.customer?.number || c.id}</Text>
+												<Text flex="1" noOfLines={1}>{c.assistantId || '-'}</Text>
+												<Text w="120px">{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Text>
+												<Box w="120px"><StatusBadge status={c.status} /></Box>
+											</HStack>
+										</motion.div>
 									))}
 								</VStack>
 							</VStack>
@@ -86,13 +92,15 @@ export default function CallManagementPage() {
 									<Text w="120px">Status</Text>
 								</HStack>
 								<VStack align="stretch" spacing={0}>
-									{(calls || []).map((c: any) => (
-										<HStack key={c.id} px={3} py={2} _hover={{ bg: 'whiteAlpha.100' }} onClick={()=>setSelected(c)} cursor="pointer">
-											<Text flex="1" noOfLines={1}>{c.customer?.name || c.customer?.number || c.id}</Text>
-											<Text flex="1" noOfLines={1}>{c.assistantId || '-'}</Text>
-											<Text w="120px">{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Text>
-											<Text w="120px">{c.status}</Text>
-										</HStack>
+									{(calls || []).map((c: any, idx: number) => (
+										<motion.div key={c.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.005 * idx }}>
+											<HStack px={3} py={2} _hover={{ bg: 'whiteAlpha.100' }} onClick={()=>setSelected(c)} cursor="pointer">
+												<Text flex="1" noOfLines={1}>{c.customer?.name || c.customer?.number || c.id}</Text>
+												<Text flex="1" noOfLines={1}>{c.assistantId || '-'}</Text>
+												<Text w="120px">{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Text>
+												<Text w="120px">{c.status}</Text>
+											</HStack>
+										</motion.div>
 									))}
 								</VStack>
 							</VStack>
@@ -134,7 +142,9 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 			<Box>
 				<Heading size="xs" mb={1}>Context</Heading>
 				<Textarea rows={4} value={context} onChange={e => setContext(e.target.value)} placeholder="Send real-time context updates to the agent..." />
-				<Button size="sm" mt={2} onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) }, body: JSON.stringify({ text: context }) }); }}>Update Context</Button>
+				<motion.div whileTap={{ scale: 0.98 }}>
+					<Button size="sm" mt={2} onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) }, body: JSON.stringify({ text: context }) }); }}>Update Context</Button>
+				</motion.div>
 			</Box>
 
 			<Box>
@@ -156,7 +166,9 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 						<>
 							<CLink href={(monitor as any).monitor.listenUrl} isExternal>Listen In (open in provider)</CLink>
 							<HStack>
-								<Button size="sm" onClick={() => connected ? disconnect() : connect()}>{connected ? 'Stop' : 'Listen in app'}</Button>
+								<motion.div whileTap={{ scale: 0.98 }}>
+									<Button size="sm" onClick={() => connected ? disconnect() : connect()}>{connected ? 'Stop' : 'Listen in app'}</Button>
+								</motion.div>
 								<HStack>
 									<Text fontSize="sm">Mute</Text>
 									<Switch isChecked={muted} onChange={e => setMuted(e.target.checked)} />
@@ -174,8 +186,12 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 					) : (
 						<Text opacity={0.7}>Listen In not enabled. Turn on assistant.monitorPlan.listenEnabled.</Text>
 					)}
-					<Button size="sm" onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/escalate`, { method: 'POST', headers: { ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) } }); }}>Escalate</Button>
-					<Button size="sm" colorScheme="red" onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/terminate`, { method: 'POST', headers: { ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) } }); onRefresh(); }}>Terminate Call</Button>
+					<motion.div whileTap={{ scale: 0.98 }}>
+						<Button size="sm" onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/escalate`, { method: 'POST', headers: { ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) } }); }}>Escalate</Button>
+					</motion.div>
+					<motion.div whileTap={{ scale: 0.98 }}>
+						<Button size="sm" colorScheme="red" onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/terminate`, { method: 'POST', headers: { ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) } }); onRefresh(); }}>Terminate Call</Button>
+					</motion.div>
 				</VStack>
 			</Box>
 		</VStack>

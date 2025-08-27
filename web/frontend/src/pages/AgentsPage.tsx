@@ -3,7 +3,7 @@ import { api } from '../lib/api'
 import { useState } from 'react'
 
 export default function AgentsPage() {
-	const { data, refetch, isLoading } = useQuery({ queryKey: ['agents'], queryFn: api.listAgents })
+	const { data = [], refetch, isLoading } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
 	const [selected, setSelected] = useState<any | null>(null)
 	const [prompt, setPrompt] = useState('')
 	const [kb, setKb] = useState('')
@@ -16,7 +16,7 @@ export default function AgentsPage() {
 					<table>
 						<thead><tr><th>Name</th><th>Id</th></tr></thead>
 						<tbody>
-							{data?.map((a: any) => (
+							{data.map((a: any) => (
 								<tr key={a.id} onClick={() => { setSelected(a); setPrompt(''); setKb(''); }} style={{ cursor: 'pointer' }}>
 									<td>{a.name || 'Untitled'}</td>
 									<td>{a.id}</td>

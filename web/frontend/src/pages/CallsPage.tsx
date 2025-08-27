@@ -3,7 +3,7 @@ import { api } from '../lib/api'
 import { useMemo, useState } from 'react'
 
 export default function CallsPage() {
-	const { data } = useQuery({ queryKey: ['calls'], queryFn: api.listCalls })
+	const { data = [] } = useQuery<any[]>({ queryKey: ['calls'], queryFn: api.listCalls as any })
 	const [selected, setSelected] = useState<any | null>(null)
 	const filtered = useMemo(() => data || [], [data])
 
@@ -32,7 +32,7 @@ export default function CallsPage() {
 }
 
 function CallDetail({ call }: { call: any }) {
-	const { data } = useQuery({ queryKey: ['artifacts', call.id], queryFn: () => api.getArtifacts(call.id) })
+	const { data = {} as any } = useQuery<any>({ queryKey: ['artifacts', call.id], queryFn: () => api.getArtifacts(call.id) as any })
 	return (
 		<div>
 			<h3>Call Detail</h3>

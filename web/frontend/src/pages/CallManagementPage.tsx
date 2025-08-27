@@ -6,9 +6,9 @@ type Tab = 'active' | 'queued' | 'all'
 
 export default function CallManagementPage() {
 	const qc = useQueryClient()
-	const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: api.listAgents })
+	const { data: agents = [] } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
 	const [tab, setTab] = useState<Tab>('active')
-	const { data: calls } = useQuery({ queryKey: ['calls', tab], queryFn: () => api.listCalls() })
+	const { data: calls = [] } = useQuery<any[]>({ queryKey: ['calls', tab], queryFn: api.listCalls as any })
 	const [selected, setSelected] = useState<any | null>(null)
 
 	const filtered = useMemo(() => {
@@ -28,7 +28,7 @@ export default function CallManagementPage() {
 					<span>{agents?.length ?? 0}</span>
 				</div>
 				<ul style={{ maxHeight: 360, overflow: 'auto' }}>
-					{agents?.map((a: any) => (
+					{agents.map((a: any) => (
 						<li key={a.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
 							<span>{a.name || 'Untitled'}</span>
 							<span style={{ color: '#888' }}>id:{a.id.slice(0, 6)}…</span>
@@ -80,8 +80,8 @@ export default function CallManagementPage() {
 }
 
 function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) {
-	const { data: artifacts } = useQuery({ queryKey: ['artifacts', call.id], queryFn: () => api.getArtifacts(call.id) })
-	const { data: monitor } = useQuery({ queryKey: ['monitor', call.id], queryFn: () => api.getLiveSessionInfo(call.id) })
+	const { data: artifacts = {} as any } = useQuery<any>({ queryKey: ['artifacts', call.id], queryFn: () => api.getArtifacts(call.id) as any })
+	const { data: monitor = {} as any } = useQuery<any>({ queryKey: ['monitor', call.id], queryFn: () => api.getLiveSessionInfo(call.id) as any })
 	const [context, setContext] = useState('')
 
 	return (
@@ -95,7 +95,7 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 			<div>
 				<h4>Context</h4>
 				<textarea rows={4} value={context} onChange={e => setContext(e.target.value)} style={{ width: '100%' }} placeholder="Send real-time context updates to the agent..." />
-				<button onClick={async () => { await api as any; await fetch(`${api.API_BASE ?? ''}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(context) }); }}>Update Context</button>
+				<button onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(context) }); }}>Update Context</button>
 			</div>
 
 			<div>
@@ -113,11 +113,11 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 			<div>
 				<h4>Quick Actions</h4>
 				<div style={{ display: 'grid', gap: 8 }}>
-					{monitor?.monitor?.listenUrl && (
-						<a href={monitor.monitor.listenUrl} target="_blank">Listen In</a>
+					{(monitor as any)?.monitor?.listenUrl && (
+						<a href={(monitor as any).monitor.listenUrl} target="_blank">Listen In</a>
 					)}
-					<button onClick={async () => { await fetch(`${api.API_BASE ?? ''}/api/calls/${call.id}/escalate`, { method: 'POST' }); }}>Escalate</button>
-					<button onClick={async () => { await fetch(`${api.API_BASE ?? ''}/api/calls/${call.id}/terminate`, { method: 'POST' }); onRefresh(); }}>Terminate Call</button>
+					<button onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/escalate`, { method: 'POST' }); }}>Escalate</button>
+					<button onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/terminate`, { method: 'POST' }); onRefresh(); }}>Terminate Call</button>
 				</div>
 			</div>
 		</div>

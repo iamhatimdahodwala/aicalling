@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 from pydantic_settings import BaseSettings
 from .routers import agents, calls, live
 
@@ -39,4 +42,13 @@ def health_check():
 app.include_router(agents.router)
 app.include_router(calls.router)
 app.include_router(live.router)
+
+# Optionally serve the frontend if built
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../web/frontend/dist"))
+if os.path.isdir(FRONTEND_DIR):
+	app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="static")
+
+	@app.get("/")
+	def serve_root():
+		return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 

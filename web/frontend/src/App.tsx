@@ -1,65 +1,13 @@
-import { BrowserRouter, Link, Route, Routes, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { api } from './lib/api'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import './App.css'
 import CallManagementPage from './pages/CallManagementPage'
 import AgentsPage from './pages/AgentsPage'
 import CallsPage from './pages/CallsPage'
-
-function Agents() {
-	const { data } = useQuery({ queryKey: ['agents'], queryFn: api.listAgents })
-	return (
-		<div>
-			<h2>Agents</h2>
-			<ul>
-				{data?.map((a: any) => (
-					<li key={a.id}>{a.name || a.id}</li>
-				))}
-			</ul>
-		</div>
-	)
-}
-
-function Calls() {
-	const nav = useNavigate()
-	const { data } = useQuery({ queryKey: ['calls'], queryFn: api.listCalls })
-	return (
-		<div>
-			<h2>Calls</h2>
-			<table>
-				<thead>
-					<tr><th>Id</th><th>Status</th><th>Started</th></tr>
-				</thead>
-				<tbody>
-					{data?.map((c: any) => (
-						<tr key={c.id} onClick={() => nav(`/calls/${c.id}`)} style={{ cursor: 'pointer' }}>
-							<td>{c.id}</td>
-							<td>{c.status}</td>
-							<td>{c.startedAt}</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
-		</div>
-	)
-}
-
-function CallDetail({ id }: { id: string }) {
-	const { data } = useQuery({ queryKey: ['call', id], queryFn: () => api.getArtifacts(id) })
-	return (
-		<div>
-			<h3>Call {id}</h3>
-			{data?.transcript && <pre style={{ whiteSpace: 'pre-wrap' }}>{data.transcript}</pre>}
-			{data?.recordingUrl && (
-				<audio controls src={data.recordingUrl} />
-			)}
-		</div>
-	)
-}
+import SchedulePage from './pages/SchedulePage'
 
 function CallDetailRoute() {
 	const id = location.pathname.split('/').pop() as string
-	return <CallDetail id={id} />
+	return <div>Call Detail: {id}</div>
 }
 
 function App() {
@@ -77,6 +25,7 @@ function App() {
 				<Route path="/calls" element={<CallsPage />} />
 				<Route path="/calls/:id" element={<CallDetailRoute />} />
 				<Route path="/call-management" element={<CallManagementPage />} />
+				<Route path="/schedule" element={<SchedulePage />} />
 			</Routes>
 		</BrowserRouter>
 	)

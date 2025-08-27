@@ -46,6 +46,22 @@ def get_call_artifacts(call_id: str) -> Dict[str, Any]:
 	}
 
 
+@router.get("/schedule/template")
+def download_schedule_template() -> Dict[str, Any]:
+	"""Return a simple template description for Excel columns.
+
+	Frontend will use this to render or generate a file; alternatively you can serve a static .xlsx later.
+	"""
+	return {
+		"columns": [
+			{"key": "name", "example": "John Smith"},
+			{"key": "number", "example": "+14155551234"},
+			{"key": "earliest_at", "example": "2025-08-27T13:00:00Z"},
+			{"key": "latest_at", "example": "2025-08-27T16:00:00Z"},
+		],
+	}
+
+
 @router.post("/schedule/upload")
 async def schedule_calls_from_excel(
 	assistant_id: str,
@@ -56,7 +72,15 @@ async def schedule_calls_from_excel(
 	Creates batch outbound calls via client.calls.create(customers=[...], schedule_plan=...).
 	"""
 	client = get_vapi_client()
-	wb = load_workbook(filename=await file.read(), data_only=True)
+	content = await file.read()
+	wb = load_workbook(filename=(file.filename or "uploaded.xlsx"), data_only=True)
+	# openpyxl requires a file path or file-like object; since FastAPI gives bytes, reopen via BytesIO
+	# To avoid extra deps, write to temp file
+	import tempfile
+	with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=True) as tmp:
+		tmp.write(content)
+		tmp.flush()
+		wb = load_workbook(filename=tmp.name, data_only=True)
 	ws = wb.active
 	rows = list(ws.iter_rows(values_only=True))
 	if not rows:

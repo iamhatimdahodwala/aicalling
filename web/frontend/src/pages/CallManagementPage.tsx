@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useMemo, useState } from 'react'
 import { Box, Button, Heading, HStack, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Textarea, VStack, Link as CLink } from '@chakra-ui/react'
+import StatusBadge from '../components/StatusBadge'
 
 type Tab = 'active' | 'queued' | 'all'
 
@@ -61,7 +62,7 @@ export default function CallManagementPage() {
 											<Text flex="1" noOfLines={1}>{c.customer?.name || c.customer?.number || c.id}</Text>
 											<Text flex="1" noOfLines={1}>{c.assistantId || '-'}</Text>
 											<Text w="120px">{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Text>
-											<Text w="120px">{c.status}</Text>
+											<Box w="120px"><StatusBadge status={c.status} /></Box>
 										</HStack>
 									))}
 								</VStack>

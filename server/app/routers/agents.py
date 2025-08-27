@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from vapi.assistants.types.update_assistant_dto_model import UpdateAssistantDtoModel
 from vapi.types.open_ai_message import OpenAiMessage
 from vapi.types.open_ai_message_role import OpenAiMessageRole
+from vapi.types.open_ai_model import OpenAiModel
 
 from ..services.vapi_client import get_vapi_client
 
@@ -29,6 +30,23 @@ def get_agent(agent_id: str) -> Dict[str, Any]:
 		return assistant.dict()
 	except Exception as e:  # SDK raises ApiError subclasses; return 404/400 generically
 		raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/{agent_id}/system-prompt")
+def get_system_prompt(agent_id: str) -> Dict[str, Any]:
+	client = get_vapi_client()
+	assistant = client.assistants.get(agent_id)
+	model = assistant.model
+	if model is None:
+		raise HTTPException(status_code=400, detail="Assistant has no model configured")
+	model_dict = model.dict()
+	messages = model_dict.get("messages") or []
+	current = ""
+	for m in messages:
+		if m.get("role") == "system":
+			current = m.get("content") or ""
+			break
+	return {"prompt": current, "messages": messages}
 
 
 @router.put("/{agent_id}/system-prompt")
@@ -76,4 +94,23 @@ def update_knowledge_base(agent_id: str, knowledge_base_id: Optional[str] = None
 		model=UpdateAssistantDtoModel.parse_obj(model_dict),
 	)
 	return updated.dict()
+
+
+@router.get("/{agent_id}/kb")
+def get_assistant_kb(agent_id: str) -> Dict[str, Any]:
+	client = get_vapi_client()
+	assistant = client.assistants.get(agent_id)
+	model = assistant.model
+	if model is None:
+		return {"knowledgeBaseId": None}
+	model_dict = model.dict()
+	kb_id = model_dict.get("knowledgeBaseId")
+	resp: Dict[str, Any] = {"knowledgeBaseId": kb_id}
+	if kb_id:
+		try:
+			kb = client.knowledge_bases.get(kb_id)
+			resp["knowledgeBaseName"] = getattr(kb, "name", None)
+		except Exception:
+			pass
+	return resp
 

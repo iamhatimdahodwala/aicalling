@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 from .config import settings
-from .routers import agents, calls, live
+from .routers import agents, calls, live, knowledge_base
 
 
 
@@ -30,6 +30,7 @@ def health_check():
 app.include_router(agents.router)
 app.include_router(calls.router)
 app.include_router(live.router)
+app.include_router(knowledge_base.router)
 
 # Optionally serve the frontend if built
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../web/frontend/dist"))

@@ -3,23 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
-from pydantic_settings import BaseSettings
+from .config import settings
 from .routers import agents, calls, live
 
 
-class Settings(BaseSettings):
-	# Vapi API token
-	VAPI_TOKEN: str = ""
-	ESCALATE_WEBHOOK_URL: str = ""
-
-	# Allowed CORS origins for the frontend
-	CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
-
-	class Config:
-		env_file = ".env"
-
-
-settings = Settings()
 
 app = FastAPI(title="Vapi AI Call Management API")
 

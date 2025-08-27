@@ -4,8 +4,7 @@ from functools import lru_cache
 from typing import Optional
 
 from vapi import Vapi
-
-from ..main import settings
+from ..config import settings
 
 
 @lru_cache(maxsize=1)

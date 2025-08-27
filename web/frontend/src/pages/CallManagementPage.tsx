@@ -12,7 +12,7 @@ export default function CallManagementPage() {
 	const qc = useQueryClient()
 	const { data: agents = [] } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
 	const [tab, setTab] = useState<Tab>('active')
-	const { data: calls = [] } = useQuery<any[]>({ queryKey: ['calls', tab], queryFn: api.listCalls as any })
+	const { data: calls = [], isLoading: callsLoading } = useQuery<any[]>({ queryKey: ['calls', tab], queryFn: api.listCalls as any })
 	const [selected, setSelected] = useState<any | null>(null)
 
 	const filtered = useMemo(() => {
@@ -24,7 +24,12 @@ export default function CallManagementPage() {
 	}, [calls, tab])
 
 	return (
-		<HStack align="start" spacing={4}>
+		<HStack align="start" spacing={4} position="relative">
+			{callsLoading && (
+				<Box position="absolute" inset={0} display="flex" alignItems="center" justifyContent="center" bg="blackAlpha.400" zIndex={1}>
+					<Text>Loading…</Text>
+				</Box>
+			)}
 			{/* Left agents panel */}
 			<Box borderRight="1px" borderColor="whiteAlpha.300" pr={3} minW="260px">
 				<HStack justify="space-between" align="center">
@@ -70,8 +75,27 @@ export default function CallManagementPage() {
 								</VStack>
 							</VStack>
 						</TabPanel>
-						<TabPanel px={0}><Text opacity={0.7}>Queue view mirrors Active; populate when statuses are queued.</Text></TabPanel>
-						<TabPanel px={0}><Text opacity={0.7}>All calls listed above when tab is All.</Text></TabPanel>
+						<TabPanel px={0}><Text opacity={0.7}>Queue view shows calls in queued status.</Text></TabPanel>
+						<TabPanel px={0}>
+							<VStack align="stretch" spacing={0} border="1px" borderColor="whiteAlpha.300" borderRadius="md" overflow="hidden">
+								<HStack bg="whiteAlpha.200" px={3} py={2}>
+									<Text flex="1">Caller</Text>
+									<Text flex="1">Agent</Text>
+									<Text w="120px">Duration</Text>
+									<Text w="120px">Status</Text>
+								</HStack>
+								<VStack align="stretch" spacing={0}>
+									{(calls || []).map((c: any) => (
+										<HStack key={c.id} px={3} py={2} _hover={{ bg: 'whiteAlpha.100' }} onClick={()=>setSelected(c)} cursor="pointer">
+											<Text flex="1" noOfLines={1}>{c.customer?.name || c.customer?.number || c.id}</Text>
+											<Text flex="1" noOfLines={1}>{c.assistantId || '-'}</Text>
+											<Text w="120px">{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Text>
+											<Text w="120px">{c.status}</Text>
+										</HStack>
+									))}
+								</VStack>
+							</VStack>
+						</TabPanel>
 					</TabPanels>
 				</Tabs>
 			</Box>

@@ -45,6 +45,8 @@ export const api = {
 			body: form,
 		}).then(handle);
 	},
+	scheduleSingle: (data: { assistant_id: string; name?: string; number: string; earliest_at: string; latest_at?: string }) =>
+		fetch(`${API_BASE}/api/calls/schedule/single`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handle),
 
 	getLiveSessionInfo: (callId: string) => fetch(`${API_BASE}/api/live/session/${callId}`).then(handle),
 	terminateSession: (sessionId: string) =>

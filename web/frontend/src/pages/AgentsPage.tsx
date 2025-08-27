@@ -90,8 +90,8 @@ export default function AgentsPage() {
 
 			<Modal isOpen={isOpen} onClose={onClose} size="xl">
 				<ModalOverlay />
-				<ModalContent>
-					<ModalHeader>Edit Agent</ModalHeader>
+				<ModalContent bg="gray.800" color="white">
+					<ModalHeader bg="whiteAlpha.200" borderBottom="1px" borderColor="whiteAlpha.300">Edit Agent</ModalHeader>
 					<ModalBody>
 						<HStack mb={3}>
 							<Box flex="1">
@@ -127,7 +127,7 @@ export default function AgentsPage() {
 							</Box>
 						)}
 					</ModalBody>
-					<ModalFooter>
+					<ModalFooter bg="whiteAlpha.200" borderTop="1px" borderColor="whiteAlpha.300">
 						<Button mr={3} onClick={onClose} variant="ghost">Close</Button>
 						<Button colorScheme="blue" onClick={() => savePrompt.mutate()} isLoading={savePrompt.isPending}>Save</Button>
 					</ModalFooter>

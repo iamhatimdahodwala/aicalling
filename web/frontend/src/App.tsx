@@ -36,16 +36,16 @@ function App() {
 					<Route path="/schedule" element={<SchedulePage />} />
 				</Routes>
 			</AppShell>
-			<Modal isOpen={askToken} onClose={()=>{}} isCentered>
-				<ModalOverlay />
-				<ModalContent>
+			<Modal isOpen={askToken} onClose={()=>{}} isCentered size="xl">
+				<ModalOverlay bg="blackAlpha.700" backdropFilter="blur(2px)" />
+				<ModalContent bg="gray.900" color="white" border="1px solid" borderColor="whiteAlpha.300">
 					<ModalHeader>Enter Vapi API Token</ModalHeader>
 					<ModalBody>
-						<Text mb={2}>This token will be used for this session and not saved on the server.</Text>
+						<Text mb={3} opacity={0.9}>This token will be used for this session and not saved on the server.</Text>
 						<Input type="password" placeholder="sk_..." value={token} onChange={e => setToken(e.target.value)} />
 					</ModalBody>
 					<ModalFooter>
-						<Button colorScheme="blue" onClick={saveToken} isDisabled={!token}>OK</Button>
+						<Button colorScheme="blue" onClick={saveToken} isDisabled={!token}>Continue</Button>
 					</ModalFooter>
 				</ModalContent>
 			</Modal>

@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
+from pydantic import BaseModel
 from openpyxl import load_workbook
 
 from vapi.types.create_customer_dto import CreateCustomerDto
@@ -172,6 +173,34 @@ async def schedule_calls_from_excel(
 	resp = client.calls.create(
 		assistant_id=assistant_id,
 		customers=customers,
+		schedule_plan=schedule,
+	)
+	return resp.dict()
+
+
+class ScheduleSingleBody(BaseModel):
+	assistant_id: str
+	name: str | None = None
+	number: str
+	earliest_at: datetime
+	latest_at: datetime | None = None
+
+
+@router.post("/schedule/single")
+def schedule_single(body: ScheduleSingleBody) -> Dict[str, Any]:
+	"""Schedule a single outbound call for a customer.
+
+	Body: { assistant_id, name?, number, earliest_at, latest_at? }
+	"""
+	client = get_vapi_client()
+	schedule = SchedulePlan(
+		earliest_at=body.earliest_at,
+		latest_at=body.latest_at,
+	)
+	customer = CreateCustomerDto(name=body.name, number=body.number)
+	resp = client.calls.create(
+		assistant_id=body.assistant_id,
+		customers=[customer],
 		schedule_plan=schedule,
 	)
 	return resp.dict()

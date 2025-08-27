@@ -5,8 +5,7 @@ Run the API locally:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-pip install git+https://github.com/VapiAI/server-sdk-python.git
+pip install -r requirements.txt  # includes Vapi SDK
 export VAPI_TOKEN=sk_your_token
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -14,6 +13,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 Environment:
 
 - VAPI_TOKEN: Your Vapi server API token
+- ESCALATE_WEBHOOK_URL: Optional. URL to receive escalate events `{ callId, destination }`
 - CORS_ORIGINS: Comma separated list of allowed origins (default: localhost ports)
 
 API overview:

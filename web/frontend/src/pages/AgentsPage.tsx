@@ -56,11 +56,11 @@ export default function AgentsPage() {
 	}
 
 	return (
-		<Box>
+		<Box sx={{ width: '100%' }}>
 			<Typography variant="h6" sx={{ mb: 2 }}>Agents</Typography>
 			{isLoading ? 'Loading…' : (
-				<Paper variant="outlined">
-					<Table size="small">
+				<Paper variant="outlined" sx={{ width: '100%' }}>
+					<Table size="small" sx={{ width: '100%' }}>
 						<TableHead><TableRow><TableCell>Name</TableCell><TableCell>Id</TableCell><TableCell width="1%"></TableCell></TableRow></TableHead>
 						<TableBody>
 							{rows.map((a: any) => (

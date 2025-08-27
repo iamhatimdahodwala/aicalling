@@ -9,7 +9,7 @@ export default function CallsPage() {
 	const filtered = useMemo(() => data || [], [data])
 
 	return (
-		<Stack direction="row" spacing={3} alignItems="flex-start">
+		<Stack direction="row" spacing={2} alignItems="flex-start" sx={{ width: '100%' }}>
 			<Box flex={1}>
 				<Typography variant="h6" sx={{ mb: 1 }}>Calls</Typography>
 				<Box sx={{ position: 'relative' }}>
@@ -18,8 +18,8 @@ export default function CallsPage() {
 							<CircularProgress size={28} />
 						</Box>
 					)}
-					<Paper variant="outlined">
-						<Table size="small">
+					<Paper variant="outlined" sx={{ width: '100%' }}>
+						<Table size="small" sx={{ width: '100%' }}>
 							<TableHead>
 								<TableRow>
 									<TableCell>Caller</TableCell>

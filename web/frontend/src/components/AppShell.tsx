@@ -24,7 +24,7 @@ export default function AppShell({ children }: { children: any }) {
 			</AppBar>
 			<Drawer variant="permanent" sx={{ width: drawerWidth, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box', bgcolor: 'rgba(255,255,255,0.04)' } }}>
 				<Toolbar />
-				<Box sx={{ overflow: 'auto' }}>
+				<Box sx={{ overflow: 'auto', pt: 1 }}>
 					<List>
 						<NavItem to="/call-management">Call Management</NavItem>
 						<NavItem to="/agents">Agents</NavItem>
@@ -33,7 +33,7 @@ export default function AppShell({ children }: { children: any }) {
 					</List>
 				</Box>
 			</Drawer>
-			<Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+			<Box component="main" sx={{ flexGrow: 1, p: 2, width: `calc(100% - ${drawerWidth}px)` }}>
 				<Toolbar />
 				{children}
 			</Box>

@@ -26,12 +26,12 @@ export default function SchedulePage() {
 	}
 
 	return (
-		<Stack spacing={3}>
+		<Stack spacing={2} sx={{ width: '100%' }}>
 			<Typography variant="h6">Schedule Calls</Typography>
-			<Stack direction="row" spacing={3} alignItems="flex-start">
+			<Stack direction="row" spacing={2} alignItems="flex-start" sx={{ width: '100%' }}>
 				<Box sx={{ flex: 1 }}>
 					<Typography variant="subtitle2" sx={{ mb: 1 }}>Single Call</Typography>
-					<Paper variant="outlined" sx={{ p: 2 }}>
+					<Paper variant="outlined" sx={{ p: 2, width: '100%' }}>
 						<Stack spacing={2}>
 							<div>
 								<Typography variant="caption">Assistant</Typography>
@@ -54,7 +54,7 @@ export default function SchedulePage() {
 				</Box>
 				<Box sx={{ flex: 1 }}>
 					<Typography variant="subtitle2" sx={{ mb: 1 }}>Bulk Upload</Typography>
-					<Paper variant="outlined" sx={{ p: 2 }}>
+					<Paper variant="outlined" sx={{ p: 2, width: '100%' }}>
 						<Typography variant="body2" sx={{ mb: 1 }}>Upload .xlsx with headers: name, number, earliest_at, latest_at (optional).</Typography>
 						<Stack spacing={2}>
 							<div>

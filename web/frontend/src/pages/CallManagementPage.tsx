@@ -25,7 +25,7 @@ export default function CallManagementPage() {
 	}, [calls, tab])
 
 	return (
-		<Stack direction="row" alignItems="flex-start" spacing={3} sx={{ position: 'relative' }}>
+		<Stack direction="row" alignItems="stretch" spacing={2} sx={{ position: 'relative', height: 'calc(100vh - 64px - 16px)' }}>
 			{callsLoading && (
 				<Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.3)', zIndex: 1 }}>
 					<CircularProgress />
@@ -37,7 +37,7 @@ export default function CallManagementPage() {
 					<Typography variant="subtitle1">AI Agents</Typography>
 					<Typography variant="body2" color="text.secondary">{agents?.length ?? 0}</Typography>
 				</Stack>
-				<Stack spacing={1} sx={{ maxHeight: 360, overflowY: 'auto', mt: 1 }}>
+				<Stack spacing={1} sx={{ maxHeight: '100%', overflowY: 'auto', mt: 1 }}>
 					{agents.map((a: any, idx: number) => (
 						<motion.div key={a.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 * idx }}>
 							<Stack direction="row" spacing={1} sx={{ px: 1, py: 0.5, borderRadius: 1, '&:hover': { bgcolor: 'action.hover' } }}>
@@ -51,20 +51,20 @@ export default function CallManagementPage() {
 			</Box>
 
 			{/* Center calls table with tabs */}
-			<Box sx={{ flex: 1 }}>
-				<Tabs value={['active','queued','all'].indexOf(tab)} onChange={(e, i)=>setTab(['active','queued','all'][i] as TabType)}>
+			<Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+				<Tabs value={['active','queued','all'].indexOf(tab)} onChange={(e, i)=>setTab(['active','queued','all'][i] as TabType)} sx={{ minHeight: 40 }}>
 					<Tab label="Active Calls" />
 					<Tab label="Queue" />
 					<Tab label="All" />
 				</Tabs>
-				<Paper variant="outlined" sx={{ mt: 1 }}>
+				<Paper variant="outlined" sx={{ mt: 1, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 					<Stack direction="row" spacing={2} sx={{ px: 2, py: 1, bgcolor: 'action.hover' }}>
 						<Typography variant="caption" sx={{ flex: 1 }}>Caller</Typography>
 						<Typography variant="caption" sx={{ flex: 1 }}>Agent</Typography>
 						<Typography variant="caption" sx={{ width: 120 }}>Duration</Typography>
 						<Typography variant="caption" sx={{ width: 120 }}>Status</Typography>
 					</Stack>
-					<Stack>
+					<Stack sx={{ flex: 1, overflowY: 'auto' }}>
 						{filtered.map((c: any, idx: number) => (
 							<motion.div key={c.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 * idx }}>
 								<Stack direction="row" spacing={2} sx={{ px: 2, py: 1, '&:hover': { bgcolor: 'action.hover' }, cursor: 'pointer' }} onClick={()=>setSelected(c)}>
@@ -80,13 +80,15 @@ export default function CallManagementPage() {
 			</Box>
 
 			{/* Right details panel */}
-			<Box sx={{ borderLeft: '1px solid', borderColor: 'divider', pl: 2, minWidth: 360 }}>
+			<Box sx={{ borderLeft: '1px solid', borderColor: 'divider', pl: 2, minWidth: 360, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 				<Typography variant="subtitle1">Call Details</Typography>
-				{selected ? (
-					<CallDetails call={selected} onRefresh={() => qc.invalidateQueries({ queryKey: ['calls'] })} />
-				) : (
-					<Typography color="text.secondary">Select a call to view details</Typography>
-				)}
+				<Box sx={{ flex: 1, overflowY: 'auto' }}>
+					{selected ? (
+						<CallDetails call={selected} onRefresh={() => qc.invalidateQueries({ queryKey: ['calls'] })} />
+					) : (
+						<Typography color="text.secondary">Select a call to view details</Typography>
+					)}
+				</Box>
 			</Box>
 		</Stack>
 	)

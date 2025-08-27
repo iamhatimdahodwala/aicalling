@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api'
+import { api, API_BASE } from '../lib/api'
 import { useMemo, useState } from 'react'
-import { Box, Button, Heading, HStack, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Textarea, VStack, Link as CLink } from '@chakra-ui/react'
+import { Box, Button, Heading, HStack, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Textarea, VStack, Link as CLink, Spinner } from '@chakra-ui/react'
 import { Slider, SliderTrack, SliderFilledTrack, SliderThumb, Switch } from '@chakra-ui/react'
 import StatusBadge from '../components/StatusBadge'
 import { usePcmWebSocketAudio } from '../hooks/usePcmWebSocketAudio'
@@ -27,7 +27,7 @@ export default function CallManagementPage() {
 		<HStack align="start" spacing={4} position="relative">
 			{callsLoading && (
 				<Box position="absolute" inset={0} display="flex" alignItems="center" justifyContent="center" bg="blackAlpha.400" zIndex={1}>
-					<Text>Loading…</Text>
+					<Spinner size="lg" />
 				</Box>
 			)}
 			{/* Left agents panel */}
@@ -38,9 +38,10 @@ export default function CallManagementPage() {
 				</HStack>
 				<VStack align="stretch" maxH="360px" overflowY="auto" mt={3} spacing={2}>
 					{agents.map((a: any) => (
-						<HStack key={a.id} justify="space-between" px={2} py={1} _hover={{ bg: 'whiteAlpha.100' }} borderRadius="md">
-							<Text noOfLines={1}>{a.name || 'Untitled'}</Text>
-							<Text opacity={0.6}>id:{a.id.slice(0, 6)}…</Text>
+						<HStack key={a.id} px={2} py={1} _hover={{ bg: 'whiteAlpha.100' }} borderRadius="md" spacing={2}>
+							<Box w="8px" h="8px" bg="green.400" borderRadius="full" flexShrink={0} />
+							<Text flex="1" noOfLines={1}>{a.name || 'Untitled'}</Text>
+							<Text opacity={0.6} fontSize="sm">{a.id.slice(0, 6)}…</Text>
 						</HStack>
 					))}
 				</VStack>
@@ -133,7 +134,7 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 			<Box>
 				<Heading size="xs" mb={1}>Context</Heading>
 				<Textarea rows={4} value={context} onChange={e => setContext(e.target.value)} placeholder="Send real-time context updates to the agent..." />
-				<Button size="sm" mt={2} onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(context) }); }}>Update Context</Button>
+				<Button size="sm" mt={2} onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/context`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) }, body: JSON.stringify({ text: context }) }); }}>Update Context</Button>
 			</Box>
 
 			<Box>
@@ -173,8 +174,8 @@ function CallDetails({ call, onRefresh }: { call: any, onRefresh: () => void }) 
 					) : (
 						<Text opacity={0.7}>Listen In not enabled. Turn on assistant.monitorPlan.listenEnabled.</Text>
 					)}
-					<Button size="sm" onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/escalate`, { method: 'POST' }); }}>Escalate</Button>
-					<Button size="sm" colorScheme="red" onClick={async () => { await fetch(`${(api as any).API_BASE ?? ''}/api/calls/${call.id}/terminate`, { method: 'POST' }); onRefresh(); }}>Terminate Call</Button>
+					<Button size="sm" onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/escalate`, { method: 'POST', headers: { ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) } }); }}>Escalate</Button>
+					<Button size="sm" colorScheme="red" onClick={async () => { await fetch(`${API_BASE}/api/calls/${call.id}/terminate`, { method: 'POST', headers: { ...(typeof window !== 'undefined' ? { 'x-vapi-token': sessionStorage.getItem('vapi_token') || '' } : {}) } }); onRefresh(); }}>Terminate Call</Button>
 				</VStack>
 			</Box>
 		</VStack>

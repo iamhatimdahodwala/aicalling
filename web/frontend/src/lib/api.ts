@@ -11,6 +11,7 @@ async function handle<T>(res: Response): Promise<T> {
 export const api = {
 	listAgents: () => fetch(`${API_BASE}/api/agents`).then(handle),
 	getAgent: (id: string) => fetch(`${API_BASE}/api/agents/${id}`).then(handle),
+	getSystemPrompt: (id: string) => fetch(`${API_BASE}/api/agents/${id}/system-prompt`).then(handle),
 	updateSystemPrompt: (id: string, prompt: string) =>
 		fetch(`${API_BASE}/api/agents/${id}/system-prompt`, {
 			method: "PUT",
@@ -21,6 +22,15 @@ export const api = {
 		fetch(`${API_BASE}/api/agents/${id}/knowledge-base?knowledge_base_id=${knowledgeBaseId ?? ""}`, {
 			method: "PUT",
 		}).then(handle),
+	getAssistantKb: (id: string) => fetch(`${API_BASE}/api/agents/${id}/kb`).then(handle),
+	listKb: () => fetch(`${API_BASE}/api/kb`).then(handle),
+	listKbDocs: (kbId: string) => fetch(`${API_BASE}/api/kb/${kbId}/documents`).then(handle),
+	uploadKbDoc: (kbId: string, file: File) => {
+		const form = new FormData();
+		form.append("file", file);
+		return fetch(`${API_BASE}/api/kb/${kbId}/documents`, { method: 'POST', body: form }).then(handle)
+	},
+	deleteKbDoc: (kbId: string, docId: string) => fetch(`${API_BASE}/api/kb/${kbId}/documents/${docId}`, { method: 'DELETE' }).then(handle),
 
 	listCalls: () => fetch(`${API_BASE}/api/calls`).then(handle),
 	getCall: (id: string) => fetch(`${API_BASE}/api/calls/${id}`).then(handle),

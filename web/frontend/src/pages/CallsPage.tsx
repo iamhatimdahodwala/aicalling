@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useMemo, useState } from 'react'
-import { Box, Heading, HStack, Spinner, Table, Tbody, Td, Th, Thead, Tr, Text, VStack } from '@chakra-ui/react'
+import { Box, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
 
 export default function CallsPage() {
 	const { data = [], isLoading } = useQuery<any[]>({ queryKey: ['calls'], queryFn: api.listCalls as any })
@@ -9,59 +9,70 @@ export default function CallsPage() {
 	const filtered = useMemo(() => data || [], [data])
 
 	return (
-		<HStack align="start" spacing={6}>
-			<Box flex="1">
-				<Heading size="md" mb={3}>Calls</Heading>
-				<Box position="relative">
+		<Stack direction="row" spacing={3} alignItems="flex-start">
+			<Box flex={1}>
+				<Typography variant="h6" sx={{ mb: 1 }}>Calls</Typography>
+				<Box sx={{ position: 'relative' }}>
 					{isLoading && (
-						<Box position="absolute" inset={0} display="flex" alignItems="center" justifyContent="center" bg="blackAlpha.300" borderRadius="md">
-							<Spinner />
+						<Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 1 }}>
+							<CircularProgress size={28} />
 						</Box>
 					)}
-					<Table variant="simple" size="sm">
-						<Thead>
-							<Tr><Th>Caller</Th><Th>Status</Th><Th>Duration</Th></Tr>
-						</Thead>
-						<Tbody>
-							{filtered.map((c: any) => (
-								<Tr key={c.id} _hover={{ bg: 'whiteAlpha.100' }} cursor="pointer" onClick={() => setSelected(c)}>
-									<Td>{c.customer?.name || c.customer?.number || c.id}</Td>
-									<Td>{c.status}</Td>
-									<Td>{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</Td>
-								</Tr>
-							))}
-						</Tbody>
-					</Table>
+					<Paper variant="outlined">
+						<Table size="small">
+							<TableHead>
+								<TableRow>
+									<TableCell>Caller</TableCell>
+									<TableCell>Status</TableCell>
+									<TableCell>Duration</TableCell>
+								</TableRow>
+							</TableHead>
+							<TableBody>
+								{filtered.map((c: any) => (
+									<TableRow key={c.id} hover sx={{ cursor: 'pointer' }} onClick={() => setSelected(c)}>
+										<TableCell>{c.customer?.name || c.customer?.number || c.id}</TableCell>
+										<TableCell>{c.status}</TableCell>
+										<TableCell>{c.endedAt && c.startedAt ? `${Math.round((new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000)}s` : '-'}</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</Paper>
 				</Box>
 			</Box>
-			<Box flex="1">
-				{selected ? <CallDetail call={selected} /> : <Box opacity={0.7}>Select a call</Box>}
+			<Box flex={1}>
+				{selected ? <CallDetail call={selected} /> : <Typography color="text.secondary">Select a call</Typography>}
 			</Box>
-		</HStack>
+		</Stack>
 	)
 }
 
 function CallDetail({ call }: { call: any }) {
 	const { data = {} as any, isLoading } = useQuery<any>({ queryKey: ['artifacts', call.id], queryFn: () => api.getArtifacts(call.id) as any })
 	return (
-		<VStack align="stretch" spacing={3} border="1px" borderColor="whiteAlpha.300" borderRadius="md" p={4}>
-			<Heading size="sm">Call Detail</Heading>
-			<Text><b>Id:</b> {call.id}</Text>
-			<Text><b>Status:</b> {call.status}</Text>
-			{isLoading && <HStack><Spinner size="sm" /><Text>Loading artifacts…</Text></HStack>}
+		<Paper variant="outlined" sx={{ p: 2 }}>
+			<Typography variant="subtitle1">Call Detail</Typography>
+			<Typography variant="body2"><b>Id:</b> {call.id}</Typography>
+			<Typography variant="body2"><b>Status:</b> {call.status}</Typography>
+			{isLoading && (
+				<Stack direction="row" alignItems="center" spacing={1}>
+					<CircularProgress size={16} />
+					<Typography variant="body2">Loading artifacts…</Typography>
+				</Stack>
+			)}
 			{data?.transcript && (
-				<Box>
-					<Heading size="xs" mb={1}>Transcript</Heading>
-					<Box as="pre" whiteSpace="pre-wrap" maxH="260px" overflowY="auto">{data.transcript}</Box>
+				<Box sx={{ mt: 1 }}>
+					<Typography variant="caption" sx={{ opacity: 0.8 }}>Transcript</Typography>
+					<Box component="pre" sx={{ whiteSpace: 'pre-wrap', maxHeight: 260, overflowY: 'auto', mt: 0.5 }}>{data.transcript}</Box>
 				</Box>
 			)}
 			{data?.recordingUrl && (
-				<Box>
-					<Heading size="xs" mb={1}>Recording</Heading>
+				<Box sx={{ mt: 1 }}>
+					<Typography variant="caption" sx={{ opacity: 0.8 }}>Recording</Typography>
 					<audio controls src={data.recordingUrl} />
 				</Box>
 			)}
-		</VStack>
+		</Paper>
 	)
 }
 

@@ -1,6 +1,5 @@
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Text } from '@chakra-ui/react'
 import './App.css'
 import CallManagementPage from './pages/CallManagementPage'
 import AgentsPage from './pages/AgentsPage'
@@ -8,6 +7,7 @@ import CallsPage from './pages/CallsPage'
 import SchedulePage from './pages/SchedulePage'
 import AppShell from './components/AppShell'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography } from '@mui/material'
 
 function CallDetailRoute() {
 	const id = location.pathname.split('/').pop() as string
@@ -48,19 +48,16 @@ function App() {
 			<AppShell>
 				<RoutesWithAnimation />
 			</AppShell>
-			<Modal isOpen={askToken} onClose={()=>{}} isCentered size="xl">
-				<ModalOverlay bg="blackAlpha.700" backdropFilter="blur(2px)" />
-				<ModalContent bg="gray.900" color="white" border="1px solid" borderColor="whiteAlpha.300">
-					<ModalHeader>Enter Vapi API Token</ModalHeader>
-					<ModalBody>
-						<Text mb={3} opacity={0.9}>This token will be used for this session and not saved on the server.</Text>
-						<Input type="password" placeholder="sk_..." value={token} onChange={e => setToken(e.target.value)} />
-					</ModalBody>
-					<ModalFooter>
-						<Button colorScheme="blue" onClick={saveToken} isDisabled={!token}>Continue</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+			<Dialog open={askToken} onClose={()=>{}} fullWidth maxWidth="sm">
+				<DialogTitle>Enter Vapi API Token</DialogTitle>
+				<DialogContent>
+					<Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>This token will be used for this session and not saved on the server.</Typography>
+					<TextField fullWidth type="password" placeholder="sk_..." value={token} onChange={e => setToken(e.target.value)} autoFocus />
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={saveToken} variant="contained" disabled={!token}>Continue</Button>
+				</DialogActions>
+			</Dialog>
 		</BrowserRouter>
 	)
 }

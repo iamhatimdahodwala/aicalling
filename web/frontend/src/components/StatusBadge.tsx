@@ -1,8 +1,9 @@
-import { Badge } from '@chakra-ui/react'
+import { Chip } from '@mui/material'
 
 export default function StatusBadge({ status }: { status?: string }) {
 	const s = (status || '').toLowerCase()
-	const color = s === 'active' ? 'green' : s === 'queued' ? 'orange' : s === 'completed' ? 'blue' : 'gray'
-	return <Badge colorScheme={color}>{status || 'unknown'}</Badge>
+	const color: 'default' | 'primary' | 'success' | 'warning' | 'info' | 'error' =
+		s === 'active' ? 'success' : s === 'queued' ? 'warning' : s === 'completed' ? 'info' : 'default'
+	return <Chip size="small" color={color} label={status || 'unknown'} />
 }
 

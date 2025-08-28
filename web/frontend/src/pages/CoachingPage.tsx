@@ -40,7 +40,12 @@ export default function CoachingPage() {
 				setCallId('')
 				setLiveTranscript('')
 			})
-			v.on('error', (e: any) => { try { setErrorText(JSON.stringify(e)) } catch { setErrorText(String(e)) } })
+			v.on('error', (e: any) => {
+				try {
+					const msg = e?.error?.message || e?.message
+					setErrorText(Array.isArray(msg) ? msg.join('\n') : (msg ? String(msg) : JSON.stringify(e)))
+				} catch { setErrorText(String(e)) }
+			})
 			setSdkReady(true)
 		} catch (e: any) {
 			setSdkReady(false)
@@ -61,9 +66,12 @@ export default function CoachingPage() {
 		if (!assistantId || !sdkReady || !vapiRef.current) { alert('Select an agent and ensure SDK key is configured'); return }
 		setInsights(''); setLiveTranscript(''); setErrorText('')
 		try {
-			await vapiRef.current.start({ assistantId })
+			await vapiRef.current.start({ assistant: { id: assistantId } })
 		} catch (e: any) {
-			try { setErrorText(JSON.stringify(e)) } catch { setErrorText(String(e)) }
+			try {
+				const msg = e?.error?.message || e?.message
+				setErrorText(Array.isArray(msg) ? msg.join('\n') : (msg ? String(msg) : JSON.stringify(e)))
+			} catch { setErrorText(String(e)) }
 		}
 	}
 	const end = async () => {

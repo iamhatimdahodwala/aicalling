@@ -3,19 +3,24 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ChakraProvider, extendTheme } from '@chakra-ui/react'
+import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'
 
 const queryClient = new QueryClient()
-const theme = extendTheme({
-	styles: { global: { body: { bg: '#0f172a', color: 'white' } } },
+const theme = createTheme({
+	palette: { mode: 'dark', background: { default: '#0b1220', paper: '#0f1628' } },
+	typography: {
+		fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto',
+	},
+	shape: { borderRadius: 10 },
 })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ChakraProvider theme={theme}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
         <App />
-      </ChakraProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

@@ -1,16 +1,16 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Button, Heading, HStack, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, Table, Tbody, Td, Th, Thead, Tr, Textarea, useDisclosure, useToast } from '@chakra-ui/react'
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material'
 
 export default function AgentsPage() {
-	const toast = useToast()
 	const { data = [], refetch, isLoading } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
 	const [selected, setSelected] = useState<any | null>(null)
 	const [prompt, setPrompt] = useState('')
 	const [kb, setKb] = useState('')
+	const [kbName, setKbName] = useState('')
 	const [docs, setDocs] = useState<any[]>([])
-	const { isOpen, onOpen, onClose } = useDisclosure()
+	const [open, setOpen] = useState(false)
 
 	const { data: kbList = [] } = useQuery<any[]>({ queryKey: ['kb-list'], queryFn: api.listKb as any })
 
@@ -23,116 +23,119 @@ export default function AgentsPage() {
 				const akb: any = await (api.getAssistantKb as any)(selected.id)
 				if (akb && akb.knowledgeBaseId) {
 					setKb(akb.knowledgeBaseId as string)
+					setKbName((akb.knowledgeBaseName as string) || '')
 					try { const d: any = await (api.listKbDocs as any)(akb.knowledgeBaseId); setDocs((d && (d.documents || d)) || []); } catch {}
 				} else {
 					setKb('')
+					setKbName('')
 					setDocs([])
 				}
-			} catch (e) {
-				// ignore, toast on explicit errors
-			}
+			} catch {}
 		}
-		if (isOpen) load()
-	}, [isOpen, selected])
+		if (open) load()
+	}, [open, selected])
+
+	useEffect(() => {
+		const loadDocsForKb = async () => {
+			if (!kb) { setDocs([]); return }
+			try { const d: any = await (api.listKbDocs as any)(kb); setDocs((d && (d.documents || d)) || []) } catch { setDocs([]) }
+		}
+		if (open) loadDocsForKb()
+	}, [kb, open])
 
 	const rows = useMemo(() => data, [data])
 
 	const savePrompt = useMutation({
-		mutationFn: async () => {
-			if (!selected) return
-			await api.updateSystemPrompt(selected.id, prompt)
-		},
-		onSuccess: async () => { toast({ title: 'Prompt saved', status: 'success' }); await refetch(); onClose(); },
-		onError: () => toast({ title: 'Failed to save prompt', status: 'error' })
+		mutationFn: async () => { if (!selected) return; await api.updateSystemPrompt(selected.id, prompt) },
+		onSuccess: async () => { await refetch(); setOpen(false) },
 	})
 	const saveKb = useMutation({
-		mutationFn: async () => {
-			if (!selected) return
-			await api.updateKnowledgeBase(selected.id, kb || undefined)
-		},
-		onSuccess: async () => { toast({ title: 'Knowledge base updated', status: 'success' }); await refetch(); if (kb) { try { const d: any = await (api.listKbDocs as any)(kb); setDocs((d && (d.documents || d)) || []); } catch {} } },
-		onError: () => toast({ title: 'Failed to update KB', status: 'error' })
+		mutationFn: async () => { if (!selected) return; await api.updateKnowledgeBase(selected.id, kb || undefined) },
+		onSuccess: async () => { await refetch(); if (kb) { try { const d: any = await (api.listKbDocs as any)(kb); setDocs((d && (d.documents || d)) || []); } catch {} } },
+	})
+	const detachKb = useMutation({
+		mutationFn: async () => { if (!selected) return; await api.updateKnowledgeBase(selected.id, undefined) },
+		onSuccess: async () => { setKb(''); setKbName(''); setDocs([]); await refetch() },
 	})
 
 	const onUpload = async (f?: File) => {
 		if (!selected || !kb || !f) return
 		await (api.uploadKbDoc as any)(kb, f)
-		toast({ title: 'Document uploaded', status: 'success' })
 		try { const d: any = await (api.listKbDocs as any)(kb); setDocs((d && (d.documents || d)) || []); } catch {}
 	}
 
 	const onDelete = async (docId: string) => {
 		if (!kb) return
 		await (api.deleteKbDoc as any)(kb, docId)
-		toast({ title: 'Document deleted', status: 'success' })
 		try { const d: any = await (api.listKbDocs as any)(kb); setDocs((d && (d.documents || d)) || []); } catch {}
 	}
 
 	return (
-		<Box>
-			<Heading size="md" mb={4}>Agents</Heading>
+		<Box sx={{ width: '100%' }}>
+			<Typography variant="h6" sx={{ mb: 2 }}>Agents</Typography>
 			{isLoading ? 'Loading…' : (
-				<Table variant="simple" size="sm">
-					<Thead><Tr><Th>Name</Th><Th>Id</Th><Th w="1%"></Th></Tr></Thead>
-					<Tbody>
-						{rows.map((a: any) => (
-							<Tr key={a.id} _hover={{ bg: 'whiteAlpha.100' }}>
-								<Td>{a.name || 'Untitled'}</Td>
-								<Td>{a.id}</Td>
-								<Td>
-									<Button size="xs" onClick={() => { setSelected(a); onOpen(); }}>Edit</Button>
-								</Td>
-							</Tr>
-						))}
-					</Tbody>
-				</Table>
+				<Paper variant="outlined" sx={{ width: '100%' }}>
+					<Table size="small" sx={{ width: '100%' }}>
+						<TableHead><TableRow><TableCell>Name</TableCell><TableCell>Id</TableCell><TableCell width="1%"></TableCell></TableRow></TableHead>
+						<TableBody>
+							{rows.map((a: any) => (
+								<TableRow key={a.id} hover>
+									<TableCell>{a.name || 'Untitled'}</TableCell>
+									<TableCell>{a.id}</TableCell>
+									<TableCell>
+										<Button size="small" variant="outlined" onClick={() => { setSelected(a); setOpen(true) }}>Edit</Button>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</Paper>
 			)}
 
-			<Modal isOpen={isOpen} onClose={onClose} size="xl">
-				<ModalOverlay />
-				<ModalContent bg="gray.800" color="white">
-					<ModalHeader bg="whiteAlpha.200" borderBottom="1px" borderColor="whiteAlpha.300">Edit Agent</ModalHeader>
-					<ModalBody>
-						<HStack mb={3}>
-							<Box flex="1">
-								<Heading size="xs" mb={1}>Knowledge Base</Heading>
-								<HStack>
-									<Select placeholder="Select KB" value={kb} onChange={e => setKb(e.target.value)}>
-										{kbList.map((k: any) => <option key={k.id} value={k.id}>{k.name || k.id}</option>)}
-									</Select>
-									<Button size="sm" onClick={() => saveKb.mutate()} isLoading={saveKb.isPending}>Attach</Button>
-								</HStack>
-							</Box>
-						</HStack>
-						<Heading size="xs" mb={1}>System Prompt</Heading>
-						<Textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={8} placeholder="Current system prompt" />
+			<Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
+				<DialogTitle>Edit Agent</DialogTitle>
+				<DialogContent>
+					<Stack spacing={2} sx={{ mt: 1 }}>
+						<Typography variant="caption">Knowledge Base</Typography>
+						<Stack direction="row" spacing={1} alignItems="center">
+							<Select fullWidth displayEmpty value={kb} onChange={e => setKb(e.target.value as string)}>
+								<MenuItem value=""><em>Select KB</em></MenuItem>
+								{kbList.map((k: any) => <MenuItem key={k.id} value={k.id}>{k.name || k.id}</MenuItem>)}
+							</Select>
+							<Button size="small" variant="contained" onClick={() => saveKb.mutate()}>Attach</Button>
+							{kbName && <Button size="small" color="error" onClick={() => detachKb.mutate()}>Detach current ({kbName})</Button>}
+						</Stack>
+						<Typography variant="caption">System Prompt</Typography>
+						<TextField multiline minRows={6} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Current system prompt" fullWidth />
 
 						{kb && (
-							<Box mt={4}>
-								<Heading size="xs" mb={2}>Documents</Heading>
-								<HStack mb={2}>
-									<Input type="file" onChange={e => onUpload(e.target.files?.[0] || undefined)} />
-								</HStack>
-								<Table size="sm" variant="simple">
-									<Thead><Tr><Th>Name</Th><Th w="1%"></Th></Tr></Thead>
-									<Tbody>
-										{(docs || []).map((d: any) => (
-											<Tr key={d.id || d.documentId}>
-												<Td>{d.name || d.filename || d.id || d.documentId}</Td>
-												<Td><Button size="xs" colorScheme="red" onClick={() => onDelete(d.id || d.documentId)}>Delete</Button></Td>
-											</Tr>
-										))}
-									</Tbody>
-								</Table>
+							<Box>
+								<Typography variant="caption">Documents</Typography>
+								<Stack direction="row" spacing={1} sx={{ my: 1 }}>
+									<input type="file" onChange={e => onUpload(e.target.files?.[0] || undefined)} />
+								</Stack>
+								<Paper variant="outlined">
+									<Table size="small">
+										<TableHead><TableRow><TableCell>Name</TableCell><TableCell width="1%"></TableCell></TableRow></TableHead>
+										<TableBody>
+											{(docs || []).map((d: any) => (
+												<TableRow key={d.id || d.documentId}>
+													<TableCell>{d.name || d.filename || d.id || d.documentId}</TableCell>
+													<TableCell><Button size="small" color="error" onClick={() => onDelete(d.id || d.documentId)}>Delete</Button></TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</Paper>
 							</Box>
 						)}
-					</ModalBody>
-					<ModalFooter bg="whiteAlpha.200" borderTop="1px" borderColor="whiteAlpha.300">
-						<Button mr={3} onClick={onClose} variant="ghost">Close</Button>
-						<Button colorScheme="blue" onClick={() => savePrompt.mutate()} isLoading={savePrompt.isPending}>Save</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+					</Stack>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpen(false)}>Close</Button>
+					<Button variant="contained" onClick={() => savePrompt.mutate()}>Save</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	)
 }

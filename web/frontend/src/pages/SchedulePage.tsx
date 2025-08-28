@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
-import { useRef, useState } from 'react'
-import { Box, Button, FormControl, FormLabel, Heading, HStack, Input, Select, Text, Textarea, VStack, useToast } from '@chakra-ui/react'
+import { useMemo, useRef, useState } from 'react'
+import { Box, Button, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material'
 
 export default function SchedulePage() {
-	const toast = useToast()
-	const { data: agents = [], isLoading: agentsLoading } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
-	const [assistantId, setAssistantId] = useState('')
+	const { data: numbers = [] } = useQuery<any[]>({ queryKey: ['numbers'], queryFn: api.listNumbers as any })
+	const { data: agents = [] } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
+	const agentNameById = useMemo(() => Object.fromEntries((agents as any[]).map((a: any) => [a.id, a.name || a.id])), [agents])
+	const [numberId, setNumberId] = useState('')
+	const [associatedAssistant, setAssociatedAssistant] = useState<string>('')
 	const [name, setName] = useState('')
 	const [number, setNumber] = useState('')
 	const [earliest, setEarliest] = useState('')
@@ -14,74 +16,71 @@ export default function SchedulePage() {
 	const [context, setContext] = useState('')
 	const fileRef = useRef<HTMLInputElement>(null)
 
+	const onSelectNumber = (val: string) => {
+		setNumberId(val)
+		const item = (numbers as any[]).find((n: any) => n.id === val)
+		setAssociatedAssistant(item?.assistantId || '')
+	}
+
 	const onScheduleSingle = async () => {
-		if (!assistantId || !number || !earliest) { toast({ title: 'Assistant, number and earliest time are required', status: 'warning' }); return }
-		await api.scheduleSingle({ assistant_id: assistantId, name: name || undefined, number, earliest_at: earliest, latest_at: latest || undefined, context: context || undefined } as any)
-		toast({ title: 'Call scheduled', status: 'success' })
+		if (!numberId || !number || !earliest) { alert('Phone number, customer number and earliest time are required'); return }
+		await api.scheduleSingle({ assistant_id: associatedAssistant, name: name || undefined, number, earliest_at: earliest, latest_at: latest || undefined, context: context || undefined } as any)
+		alert('Call scheduled')
 	}
 	const onUpload = async () => {
 		const f = fileRef.current?.files?.[0]
-		if (!assistantId || !f) { toast({ title: 'Assistant and file required', status: 'warning' }); return }
-		await api.scheduleUpload(assistantId, f)
-		toast({ title: 'Bulk calls scheduled', status: 'success' })
+		if (!numberId || !f) { alert('Phone number and file required'); return }
+		await api.scheduleUpload(associatedAssistant, f)
+		alert('Bulk calls scheduled')
 	}
 
 	return (
-		<VStack align="stretch" spacing={6}>
-			<Heading size="md">Schedule Calls</Heading>
-			<HStack align="start" spacing={8}>
-				<Box flex="1">
-					<Heading size="sm" mb={3}>Single Call</Heading>
-					<VStack align="stretch" spacing={3}>
-						<FormControl>
-							<FormLabel>Assistant</FormLabel>
-							<Select placeholder="Select assistant" value={assistantId} onChange={e => setAssistantId(e.target.value)}>
-								{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.id}</option>)}
-							</Select>
-							{agentsLoading && <Text opacity={0.7}>Loading assistants…</Text>}
-						</FormControl>
-						<FormControl>
-							<FormLabel>Customer Name (optional)</FormLabel>
-							<Input value={name} onChange={e => setName(e.target.value)} placeholder="John Smith" />
-						</FormControl>
-						<FormControl>
-							<FormLabel>Customer Number</FormLabel>
-							<Input value={number} onChange={e => setNumber(e.target.value)} placeholder="+14155551234" />
-						</FormControl>
-						<HStack>
-							<FormControl>
-								<FormLabel>Earliest At</FormLabel>
-								<Input type="datetime-local" value={earliest} onChange={e => setEarliest(e.target.value)} />
-							</FormControl>
-							<FormControl>
-								<FormLabel>Latest At (optional)</FormLabel>
-								<Input type="datetime-local" value={latest} onChange={e => setLatest(e.target.value)} />
-							</FormControl>
-						</HStack>
-						<FormControl>
-							<FormLabel>Call Context (optional)</FormLabel>
-							<Textarea value={context} onChange={e => setContext(e.target.value)} placeholder="Why are we calling? Key details for the agent." rows={4} />
-						</FormControl>
-						<Button colorScheme="blue" onClick={onScheduleSingle}>Schedule</Button>
-					</VStack>
+		<Stack spacing={2} sx={{ width: '100%' }}>
+			<Typography variant="h6">Schedule Calls</Typography>
+			<Stack direction="row" spacing={2} alignItems="flex-start" sx={{ width: '100%' }}>
+				<Box sx={{ flex: 1 }}>
+					<Typography variant="subtitle2" sx={{ mb: 1 }}>Single Call</Typography>
+					<Paper variant="outlined" sx={{ p: 2, width: '100%' }}>
+						<Stack spacing={2}>
+							<div>
+								<Typography variant="caption">Phone Number</Typography>
+								<Select fullWidth displayEmpty value={numberId} onChange={e => onSelectNumber(e.target.value as string)}>
+									<MenuItem value=""><em>Select phone</em></MenuItem>
+									{(numbers as any[]).map((n: any) => <MenuItem key={n.id} value={n.id}>{n.phoneNumber || n.id}</MenuItem>)}
+								</Select>
+							</div>
+							{associatedAssistant && <Typography variant="body2">Associated assistant: {agentNameById[associatedAssistant] || associatedAssistant}</Typography>}
+							<TextField label="Customer Name (optional)" value={name} onChange={e => setName(e.target.value)} placeholder="John Smith" fullWidth />
+							<TextField label="Customer Number" value={number} onChange={e => setNumber(e.target.value)} placeholder="+14155551234" fullWidth />
+							<Stack direction="row" spacing={2}>
+								<TextField label="Earliest At" type="datetime-local" value={earliest} onChange={e => setEarliest(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
+								<TextField label="Latest At (optional)" type="datetime-local" value={latest} onChange={e => setLatest(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
+							</Stack>
+							<TextField label="Call Context (optional)" value={context} onChange={e => setContext(e.target.value)} placeholder="Why are we calling?" fullWidth multiline minRows={3} />
+							<Button variant="contained" onClick={onScheduleSingle}>Schedule</Button>
+						</Stack>
+					</Paper>
 				</Box>
-				<Box flex="1">
-					<Heading size="sm" mb={3}>Bulk Upload</Heading>
-					<Text mb={2}>Upload .xlsx with headers: name, number, earliest_at, latest_at (optional).</Text>
-					<VStack align="stretch" spacing={3}>
-						<FormControl>
-							<FormLabel>Assistant</FormLabel>
-							<Select placeholder="Select assistant" value={assistantId} onChange={e => setAssistantId(e.target.value)}>
-								{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.id}</option>)}
-							</Select>
-							{agentsLoading && <Text opacity={0.7}>Loading assistants…</Text>}
-						</FormControl>
-						<Input type="file" ref={fileRef} accept=".xlsx" />
-						<Button onClick={onUpload}>Upload & Schedule</Button>
-					</VStack>
+				<Box sx={{ flex: 1 }}>
+					<Typography variant="subtitle2" sx={{ mb: 1 }}>Bulk Upload</Typography>
+					<Paper variant="outlined" sx={{ p: 2, width: '100%' }}>
+						<Typography variant="body2" sx={{ mb: 1 }}>Upload .xlsx with headers: name, number, earliest_at, latest_at (optional).</Typography>
+						<Stack spacing={2}>
+							<div>
+								<Typography variant="caption">Phone Number</Typography>
+								<Select fullWidth displayEmpty value={numberId} onChange={e => onSelectNumber(e.target.value as string)}>
+									<MenuItem value=""><em>Select phone</em></MenuItem>
+									{(numbers as any[]).map((n: any) => <MenuItem key={n.id} value={n.id}>{n.phoneNumber || n.id}</MenuItem>)}
+								</Select>
+							</div>
+							{associatedAssistant && <Typography variant="body2">Associated assistant: {agentNameById[associatedAssistant] || associatedAssistant}</Typography>}
+							<input type="file" ref={fileRef} accept=".xlsx" />
+							<Button variant="outlined" onClick={onUpload}>Upload & Schedule</Button>
+						</Stack>
+					</Paper>
 				</Box>
-			</HStack>
-		</VStack>
+			</Stack>
+		</Stack>
 	)
 }
 

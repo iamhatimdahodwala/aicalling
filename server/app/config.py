@@ -6,6 +6,9 @@ class Settings(BaseSettings):
 	ESCALATE_WEBHOOK_URL: str = ""
 	CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 	KB_DOCS_WEBHOOK_URL: str = ""
+	AZURE_OPENAI_ENDPOINT: str = ""
+	AZURE_OPENAI_API_KEY: str = ""
+	AZURE_OPENAI_DEPLOYMENT: str = ""
 
 	class Config:
 		env_file = ".env"

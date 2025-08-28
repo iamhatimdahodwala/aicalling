@@ -71,16 +71,14 @@ export default function CoachingPage() {
 	return (
 		<Stack spacing={2}>
 			<Typography variant="h6">Coaching</Typography>
-			{!sdkReady && (
-				<Paper variant="outlined" sx={{ p: 2 }}>
-					<Typography variant="subtitle2">Vapi Public Key</Typography>
-					<Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-						<TextField fullWidth placeholder="pk_..." value={pubKeyInput} onChange={e => setPubKeyInput(e.target.value)} />
-						<Button variant="contained" size="small" onClick={savePublicKey} disabled={!pubKeyInput}>Save</Button>
-					</Stack>
-					<Typography variant="caption" color="text.secondary">Ensure your Vapi public key allows origin http://localhost:5173 in the dashboard.</Typography>
-				</Paper>
-			)}
+			<Paper variant="outlined" sx={{ p: 2 }}>
+				<Typography variant="subtitle2">Vapi Public Key</Typography>
+				<Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+					<TextField fullWidth placeholder="pk_..." value={pubKeyInput} onChange={e => setPubKeyInput(e.target.value)} />
+					<Button variant="contained" size="small" onClick={savePublicKey} disabled={!pubKeyInput}>Save</Button>
+				</Stack>
+				<Typography variant="caption" color="text.secondary">Ensure your public key allows http://localhost:5173 in the Vapi dashboard or set VITE_VAPI_PUBLIC_KEY in .env.local.</Typography>
+			</Paper>
 			<Paper variant="outlined" sx={{ p: 2 }}>
 				<Typography variant="subtitle2">Place Web Call</Typography>
 				<Stack direction="row" spacing={1} sx={{ mt: 1 }}>

@@ -25,7 +25,7 @@ export default function CallManagementPage() {
 	}, [calls, tab])
 
 	return (
-		<Stack direction="row" alignItems="stretch" spacing={2} sx={{ position: 'relative', height: 'calc(100vh - 64px - 16px)' }}>
+		<Stack direction="row" alignItems="stretch" spacing={2} sx={{ position: 'relative', width: '100%', height: 'calc(100vh - 64px - 16px)' }}>
 			{callsLoading && (
 				<Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.3)', zIndex: 1 }}>
 					<CircularProgress />

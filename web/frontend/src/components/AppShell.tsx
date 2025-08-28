@@ -29,6 +29,7 @@ export default function AppShell({ children }: { children: any }) {
 						<NavItem to="/call-management">Call Management</NavItem>
 						<NavItem to="/agents">Agents</NavItem>
 						<NavItem to="/numbers">Numbers</NavItem>
+						<NavItem to="/coaching">Coaching</NavItem>
 						<NavItem to="/calls">Calls</NavItem>
 						<NavItem to="/schedule">Schedule</NavItem>
 					</List>

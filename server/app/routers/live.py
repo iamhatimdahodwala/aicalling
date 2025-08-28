@@ -56,3 +56,19 @@ def escalate_session(session_id: str, request: Request, destination: str | None 
 	except Exception as e:
 		raise HTTPException(status_code=400, detail=str(e))
 
+
+@router.post("/session/{session_id}/coach")
+def coach_session(session_id: str, request: Request, message: str) -> Dict[str, Any]:
+	"""Send a coaching/whisper message to the live session if supported.
+
+	If the SDK exposes a control API, use it; otherwise, store intent.
+	"""
+	client = get_vapi_client_from_request(request)
+	try:
+		if hasattr(client, "sessions") and hasattr(client.sessions, "update"):
+			updated = client.sessions.update(session_id, messages=[{"role": "system", "content": f"COACH {message}"}])
+			return updated.dict() if hasattr(updated, "dict") else {"ok": True}
+		raise HTTPException(status_code=501, detail="Coaching not supported by SDK")
+	except Exception as e:
+		raise HTTPException(status_code=400, detail=str(e))
+

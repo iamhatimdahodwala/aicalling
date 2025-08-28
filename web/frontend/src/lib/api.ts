@@ -60,9 +60,14 @@ export const api = {
 		fetch(`${API_BASE}/api/live/session/${sessionId}/terminate`, { method: "POST", headers: { ...tokenHeader() } }).then(handle),
 	escalateSession: (sessionId: string, destination?: string) =>
 		fetch(`${API_BASE}/api/live/session/${sessionId}/escalate${destination ? `?destination=${encodeURIComponent(destination)}` : ""}`, { method: "POST", headers: { ...tokenHeader() } }).then(handle),
+	coachSession: (sessionId: string, message: string) =>
+		fetch(`${API_BASE}/api/live/session/${sessionId}/coach`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...tokenHeader() }, body: JSON.stringify({ message }) }).then(handle),
 
 	listNumbers: () => fetch(`${API_BASE}/api/numbers`, { headers: { ...tokenHeader() } }).then(handle),
 	updateNumberAssistant: (numberId: string, assistantId?: string) =>
 		fetch(`${API_BASE}/api/numbers/${encodeURIComponent(numberId)}/assistant${assistantId ? `?assistant_id=${encodeURIComponent(assistantId)}` : ''}`, { method: 'PUT', headers: { ...tokenHeader() } }).then(handle),
+
+	compareInsights: (human: string, ai: string) =>
+		fetch(`${API_BASE}/api/insights/compare?human_response=${encodeURIComponent(human)}&ai_response=${encodeURIComponent(ai)}`, { method: 'POST', headers: { ...tokenHeader() } }).then(handle),
 };
 

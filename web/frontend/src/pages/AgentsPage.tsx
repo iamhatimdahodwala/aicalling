@@ -35,6 +35,14 @@ export default function AgentsPage() {
 		if (open) load()
 	}, [open, selected])
 
+	useEffect(() => {
+		const loadDocsForKb = async () => {
+			if (!kb) { setDocs([]); return }
+			try { const d: any = await (api.listKbDocs as any)(kb); setDocs((d && (d.documents || d)) || []) } catch { setDocs([]) }
+		}
+		if (open) loadDocsForKb()
+	}, [kb, open])
+
 	const rows = useMemo(() => data, [data])
 
 	const savePrompt = useMutation({

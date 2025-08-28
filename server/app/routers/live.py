@@ -19,8 +19,11 @@ def get_live_session_info(call_id: str, request: Request) -> Dict[str, Any]:
 	client = get_vapi_client_from_request(request)
 	call = client.calls.get(call_id)
 	monitor = call.monitor.dict() if getattr(call, "monitor", None) is not None else {}
+	web = getattr(call, "web", None)
+	web_dict = web.dict() if web is not None and hasattr(web, "dict") else {}
 	return {
 		"monitor": monitor,
+		"web": web_dict,
 	}
 
 

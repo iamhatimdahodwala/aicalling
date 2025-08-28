@@ -63,11 +63,17 @@ export const api = {
 	coachSession: (sessionId: string, message: string) =>
 		fetch(`${API_BASE}/api/live/session/${sessionId}/coach`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...tokenHeader() }, body: JSON.stringify({ message }) }).then(handle),
 
+	startWebCall: (assistantId: string, customerName?: string) =>
+		fetch(`${API_BASE}/api/calls/web/start`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...tokenHeader() }, body: JSON.stringify({ assistant_id: assistantId, customer_name: customerName }) }).then(handle),
+	endWebCall: (callId: string) => fetch(`${API_BASE}/api/calls/web/end/${callId}`, { method: 'POST', headers: { ...tokenHeader() } }).then(handle),
+
 	listNumbers: () => fetch(`${API_BASE}/api/numbers`, { headers: { ...tokenHeader() } }).then(handle),
 	updateNumberAssistant: (numberId: string, assistantId?: string) =>
 		fetch(`${API_BASE}/api/numbers/${encodeURIComponent(numberId)}/assistant${assistantId ? `?assistant_id=${encodeURIComponent(assistantId)}` : ''}`, { method: 'PUT', headers: { ...tokenHeader() } }).then(handle),
 
 	compareInsights: (human: string, ai: string) =>
 		fetch(`${API_BASE}/api/insights/compare?human_response=${encodeURIComponent(human)}&ai_response=${encodeURIComponent(ai)}`, { method: 'POST', headers: { ...tokenHeader() } }).then(handle),
+	compareInsightsTranscript: (transcript: string) =>
+		fetch(`${API_BASE}/api/insights/compare?transcript=${encodeURIComponent(transcript)}`, { method: 'POST', headers: { ...tokenHeader() } }).then(handle),
 };
 

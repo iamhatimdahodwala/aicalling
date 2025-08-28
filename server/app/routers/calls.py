@@ -195,6 +195,12 @@ class ScheduleSingleBody(BaseModel):
 	context: str | None = None
 
 
+class StartWebCallBody(BaseModel):
+	assistant_id: str
+	customer_name: str | None = None
+	# Optionally future: metadata, variables
+
+
 @router.post("/schedule/single")
 def schedule_single(body: ScheduleSingleBody, request: Request) -> Dict[str, Any]:
 	"""Schedule a single outbound call for a customer.
@@ -214,4 +220,41 @@ def schedule_single(body: ScheduleSingleBody, request: Request) -> Dict[str, Any
 		assistant_overrides=AssistantOverrides(variable_values={"context": body.context} if body.context else None),
 	)
 	return resp.dict()
+
+
+@router.post("/web/start")
+def start_web_call(body: StartWebCallBody, request: Request) -> Dict[str, Any]:
+	"""Start a web call for coaching/training.
+
+	Creates a call with a special 'web' target if supported by SDK.
+	"""
+	client = get_vapi_client_from_request(request)
+	try:
+		create_kwargs = {
+			"assistant_id": body.assistant_id,
+			"customer": CreateCustomerDto(name=body.customer_name or "Web User", number=None),
+		}
+		# Try common flag for web session
+		for alt in (
+			{"web": {"enabled": True}},
+			{"channel": "web"},
+		):
+			try:
+				resp = client.calls.create(**create_kwargs, **alt)
+				return resp.dict()
+			except Exception:
+				continue
+		raise HTTPException(status_code=501, detail="Web call creation not supported by SDK")
+	except Exception as e:
+		raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/web/end/{call_id}")
+def end_web_call(call_id: str, request: Request) -> Dict[str, Any]:
+	client = get_vapi_client_from_request(request)
+	try:
+		resp = client.calls.delete(call_id)
+		return resp.dict()
+	except Exception as e:
+		raise HTTPException(status_code=400, detail=str(e))
 

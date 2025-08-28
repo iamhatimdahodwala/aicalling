@@ -66,8 +66,7 @@ export default function CoachingPage() {
 		if (!assistantId || !sdkReady || !vapiRef.current) { alert('Select an agent and ensure SDK key is configured'); return }
 		setInsights(''); setLiveTranscript(''); setErrorText('')
 		try {
-			const payload = { assistantId }
-			await vapiRef.current.start(payload)
+			await vapiRef.current.start(assistantId)
 		} catch (e: any) {
 			try {
 				const msg = e?.error?.message || e?.message

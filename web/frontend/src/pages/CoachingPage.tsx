@@ -12,6 +12,7 @@ export default function CoachingPage() {
 	const [callId, setCallId] = useState<string>('')
 	const [insights, setInsights] = useState('')
 	const [liveTranscript, setLiveTranscript] = useState('')
+	const [partialTranscript, setPartialTranscript] = useState('')
 	const [errorText, setErrorText] = useState('')
 	const vapiRef = useRef<any | null>(null)
 	const [sdkReady, setSdkReady] = useState(false)
@@ -27,10 +28,26 @@ export default function CoachingPage() {
 			v.on('call-start', (payload: any) => { setCallId(payload?.id || '') })
 			v.on('message', (m: any) => {
 				try {
-					const role = m?.role || ''
-					const content = m?.content || ''
-					if (content) setLiveTranscript(t => (t ? t + '\n' : '') + `${role}: ${content}`)
+					let role = m?.role || m?.from || ''
+					let content = ''
+					if (typeof m?.content === 'string') content = m.content
+					else if (Array.isArray(m?.content)) {
+						content = m.content.map((c: any) => c?.text || c?.content || '').filter(Boolean).join('\n')
+					}
+					if (!content && typeof m?.text === 'string') content = m.text
+					if (!content && typeof m?.message === 'string') content = m.message
+					if (content) setLiveTranscript(t => (t ? t + '\n' : '') + `${role ? role + ': ' : ''}${content}`)
 				} catch {}
+			})
+			v.on('transcript', (p: any) => {
+				try {
+					const role = p?.role || ''
+					const text = p?.text || p?.content || ''
+					if (text) setLiveTranscript(t => (t ? t + '\n' : '') + `${role ? role + ': ' : ''}${text}`)
+				} catch {}
+			})
+			v.on('partial-transcript', (p: any) => {
+				try { setPartialTranscript(p?.text || p?.content || '') } catch { setPartialTranscript('') }
 			})
 			v.on('call-end', async () => {
 				const transcript = liveTranscript
@@ -38,6 +55,7 @@ export default function CoachingPage() {
 					try { const res: any = await (api as any).compareInsightsTranscript(transcript); setInsights(res.analysis || '') } catch {}
 				}
 				setCallId('')
+				setPartialTranscript('')
 				setLiveTranscript('')
 			})
 			v.on('error', (e: any) => {
@@ -64,7 +82,7 @@ export default function CoachingPage() {
 
 	const start = async () => {
 		if (!assistantId || !sdkReady || !vapiRef.current) { alert('Select an agent and ensure SDK key is configured'); return }
-		setInsights(''); setLiveTranscript(''); setErrorText('')
+		setInsights(''); setLiveTranscript(''); setPartialTranscript(''); setErrorText('')
 		try {
 			await vapiRef.current.start(assistantId)
 		} catch (e: any) {
@@ -104,6 +122,7 @@ export default function CoachingPage() {
 			</Paper>
 			<Paper variant="outlined" sx={{ p: 2 }}>
 				<Typography variant="subtitle2">Live Transcript</Typography>
+				{partialTranscript && <Typography variant="caption" color="text.secondary">{partialTranscript}</Typography>}
 				<Box component="pre" sx={{ whiteSpace: 'pre-wrap', maxHeight: 260, overflowY: 'auto', mt: 1 }}>{liveTranscript}</Box>
 			</Paper>
 			{insights && (

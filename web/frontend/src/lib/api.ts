@@ -23,11 +23,11 @@ export const api = {
 			headers: { "Content-Type": "application/json", ...tokenHeader() },
 			body: JSON.stringify(prompt),
 		}).then(handle),
-	updateKnowledgeBase: (id: string, knowledgeBaseId?: string) =>
-		fetch(`${API_BASE}/api/agents/${id}/knowledge-base?knowledge_base_id=${knowledgeBaseId ?? ""}`, {
-			method: "PUT",
-			headers: { ...tokenHeader() },
-		}).then(handle),
+	updateKnowledgeBase: (id: string, knowledgeBaseId?: string) => {
+		const url = new URL(`${API_BASE}/api/agents/${id}/knowledge-base`)
+		if (knowledgeBaseId !== undefined) url.searchParams.set('knowledge_base_id', knowledgeBaseId)
+		return fetch(url.toString(), { method: 'PUT', headers: { ...tokenHeader() } }).then(handle)
+	},
 	getAssistantKb: (id: string) => fetch(`${API_BASE}/api/agents/${id}/kb`, { headers: { ...tokenHeader() } }).then(handle),
 	listKb: () => fetch(`${API_BASE}/api/kb`, { headers: { ...tokenHeader() } }).then(handle),
 	listKbDocs: (kbId: string) => fetch(`${API_BASE}/api/kb/${kbId}/documents`, { headers: { ...tokenHeader() } }).then(handle),
@@ -60,5 +60,9 @@ export const api = {
 		fetch(`${API_BASE}/api/live/session/${sessionId}/terminate`, { method: "POST", headers: { ...tokenHeader() } }).then(handle),
 	escalateSession: (sessionId: string, destination?: string) =>
 		fetch(`${API_BASE}/api/live/session/${sessionId}/escalate${destination ? `?destination=${encodeURIComponent(destination)}` : ""}`, { method: "POST", headers: { ...tokenHeader() } }).then(handle),
+
+	listNumbers: () => fetch(`${API_BASE}/api/numbers`, { headers: { ...tokenHeader() } }).then(handle),
+	updateNumberAssistant: (numberId: string, assistantId?: string) =>
+		fetch(`${API_BASE}/api/numbers/${encodeURIComponent(numberId)}/assistant${assistantId ? `?assistant_id=${encodeURIComponent(assistantId)}` : ''}`, { method: 'PUT', headers: { ...tokenHeader() } }).then(handle),
 };
 

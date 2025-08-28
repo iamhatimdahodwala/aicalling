@@ -8,6 +8,7 @@ export default function AgentsPage() {
 	const [selected, setSelected] = useState<any | null>(null)
 	const [prompt, setPrompt] = useState('')
 	const [kb, setKb] = useState('')
+	const [kbName, setKbName] = useState('')
 	const [docs, setDocs] = useState<any[]>([])
 	const [open, setOpen] = useState(false)
 
@@ -22,9 +23,11 @@ export default function AgentsPage() {
 				const akb: any = await (api.getAssistantKb as any)(selected.id)
 				if (akb && akb.knowledgeBaseId) {
 					setKb(akb.knowledgeBaseId as string)
+					setKbName((akb.knowledgeBaseName as string) || '')
 					try { const d: any = await (api.listKbDocs as any)(akb.knowledgeBaseId); setDocs((d && (d.documents || d)) || []); } catch {}
 				} else {
 					setKb('')
+					setKbName('')
 					setDocs([])
 				}
 			} catch {}
@@ -41,6 +44,10 @@ export default function AgentsPage() {
 	const saveKb = useMutation({
 		mutationFn: async () => { if (!selected) return; await api.updateKnowledgeBase(selected.id, kb || undefined) },
 		onSuccess: async () => { await refetch(); if (kb) { try { const d: any = await (api.listKbDocs as any)(kb); setDocs((d && (d.documents || d)) || []); } catch {} } },
+	})
+	const detachKb = useMutation({
+		mutationFn: async () => { if (!selected) return; await api.updateKnowledgeBase(selected.id, undefined) },
+		onSuccess: async () => { setKb(''); setKbName(''); setDocs([]); await refetch() },
 	})
 
 	const onUpload = async (f?: File) => {
@@ -88,6 +95,7 @@ export default function AgentsPage() {
 								{kbList.map((k: any) => <MenuItem key={k.id} value={k.id}>{k.name || k.id}</MenuItem>)}
 							</Select>
 							<Button size="small" variant="contained" onClick={() => saveKb.mutate()}>Attach</Button>
+							{kbName && <Button size="small" color="error" onClick={() => detachKb.mutate()}>Detach current ({kbName})</Button>}
 						</Stack>
 						<Typography variant="caption">System Prompt</Typography>
 						<TextField multiline minRows={6} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Current system prompt" fullWidth />

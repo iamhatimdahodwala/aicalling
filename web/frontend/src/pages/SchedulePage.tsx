@@ -4,8 +4,9 @@ import { useRef, useState } from 'react'
 import { Box, Button, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material'
 
 export default function SchedulePage() {
-	const { data: agents = [], isLoading: agentsLoading } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
-	const [assistantId, setAssistantId] = useState('')
+	const { data: numbers = [] } = useQuery<any[]>({ queryKey: ['numbers'], queryFn: api.listNumbers as any })
+	const [numberId, setNumberId] = useState('')
+	const [associatedAssistant, setAssociatedAssistant] = useState<string>('')
 	const [name, setName] = useState('')
 	const [number, setNumber] = useState('')
 	const [earliest, setEarliest] = useState('')
@@ -13,15 +14,22 @@ export default function SchedulePage() {
 	const [context, setContext] = useState('')
 	const fileRef = useRef<HTMLInputElement>(null)
 
+	const onSelectNumber = (val: string) => {
+		setNumberId(val)
+		const item = (numbers as any[]).find((n: any) => n.id === val)
+		setAssociatedAssistant(item?.assistantId || '')
+	}
+
 	const onScheduleSingle = async () => {
-		if (!assistantId || !number || !earliest) { alert('Assistant, number and earliest time are required'); return }
-		await api.scheduleSingle({ assistant_id: assistantId, name: name || undefined, number, earliest_at: earliest, latest_at: latest || undefined, context: context || undefined } as any)
+		if (!numberId || !number || !earliest) { alert('Phone number, customer number and earliest time are required'); return }
+		// For now, schedule API still takes assistant_id; use associatedAssistant
+		await api.scheduleSingle({ assistant_id: associatedAssistant, name: name || undefined, number, earliest_at: earliest, latest_at: latest || undefined, context: context || undefined } as any)
 		alert('Call scheduled')
 	}
 	const onUpload = async () => {
 		const f = fileRef.current?.files?.[0]
-		if (!assistantId || !f) { alert('Assistant and file required'); return }
-		await api.scheduleUpload(assistantId, f)
+		if (!numberId || !f) { alert('Phone number and file required'); return }
+		await api.scheduleUpload(associatedAssistant, f)
 		alert('Bulk calls scheduled')
 	}
 
@@ -34,13 +42,13 @@ export default function SchedulePage() {
 					<Paper variant="outlined" sx={{ p: 2, width: '100%' }}>
 						<Stack spacing={2}>
 							<div>
-								<Typography variant="caption">Assistant</Typography>
-								<Select fullWidth displayEmpty value={assistantId} onChange={e => setAssistantId(e.target.value as string)}>
-									<MenuItem value=""><em>Select assistant</em></MenuItem>
-									{agents.map((a: any) => <MenuItem key={a.id} value={a.id}>{a.name || a.id}</MenuItem>)}
+								<Typography variant="caption">Phone Number</Typography>
+								<Select fullWidth displayEmpty value={numberId} onChange={e => onSelectNumber(e.target.value as string)}>
+									<MenuItem value=""><em>Select phone</em></MenuItem>
+									{(numbers as any[]).map((n: any) => <MenuItem key={n.id} value={n.id}>{n.phoneNumber || n.id}</MenuItem>)}
 								</Select>
-								{agentsLoading && <Typography color="text.secondary">Loading assistants…</Typography>}
 							</div>
+							{associatedAssistant && <Typography variant="body2">Associated assistant: {associatedAssistant}</Typography>}
 							<TextField label="Customer Name (optional)" value={name} onChange={e => setName(e.target.value)} placeholder="John Smith" fullWidth />
 							<TextField label="Customer Number" value={number} onChange={e => setNumber(e.target.value)} placeholder="+14155551234" fullWidth />
 							<Stack direction="row" spacing={2}>
@@ -58,12 +66,11 @@ export default function SchedulePage() {
 						<Typography variant="body2" sx={{ mb: 1 }}>Upload .xlsx with headers: name, number, earliest_at, latest_at (optional).</Typography>
 						<Stack spacing={2}>
 							<div>
-								<Typography variant="caption">Assistant</Typography>
-								<Select fullWidth displayEmpty value={assistantId} onChange={e => setAssistantId(e.target.value as string)}>
-									<MenuItem value=""><em>Select assistant</em></MenuItem>
-									{agents.map((a: any) => <MenuItem key={a.id} value={a.id}>{a.name || a.id}</MenuItem>)}
+								<Typography variant="caption">Phone Number</Typography>
+								<Select fullWidth displayEmpty value={numberId} onChange={e => onSelectNumber(e.target.value as string)}>
+									<MenuItem value=""><em>Select phone</em></MenuItem>
+									{(numbers as any[]).map((n: any) => <MenuItem key={n.id} value={n.id}>{n.phoneNumber || n.id}</MenuItem>)}
 								</Select>
-								{agentsLoading && <Typography color="text.secondary">Loading assistants…</Typography>}
 							</div>
 							<input type="file" ref={fileRef} accept=".xlsx" />
 							<Button variant="outlined" onClick={onUpload}>Upload & Schedule</Button>

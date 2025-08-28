@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 import os
 from .config import settings
 from .routers import agents, calls, live, knowledge_base
+from .routers import numbers
 
 
 
@@ -31,6 +32,7 @@ app.include_router(agents.router)
 app.include_router(calls.router)
 app.include_router(live.router)
 app.include_router(knowledge_base.router)
+app.include_router(numbers.router)
 
 # Optionally serve the frontend if built
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../web/frontend/dist"))

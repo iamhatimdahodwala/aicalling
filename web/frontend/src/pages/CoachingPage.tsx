@@ -15,12 +15,12 @@ export default function CoachingPage() {
 	const [liveTranscript, setLiveTranscript] = useState('')
 	const vapiRef = useRef<any | null>(null)
 	const [sdkReady, setSdkReady] = useState(false)
+	const [pubKeyInput, setPubKeyInput] = useState(sessionStorage.getItem('vapi_public_key') || '')
 
 	useEffect(() => {
 		(async () => {
 			const publicKey = sessionStorage.getItem('vapi_public_key') || import.meta.env.VITE_VAPI_PUBLIC_KEY
-			if (!publicKey) { console.warn('Missing VAPI public key: set sessionStorage vapi_public_key or VITE_VAPI_PUBLIC_KEY'); return }
-			// Load from CDN to avoid local package resolution issues
+			if (!publicKey) { setSdkReady(false); return }
 			const mod = await import(/* @vite-ignore */ 'https://unpkg.com/@vapi-ai/web@latest/dist/index.mjs')
 			const VapiCtor = mod.default
 			const v = new VapiCtor(publicKey)
@@ -44,7 +44,15 @@ export default function CoachingPage() {
 			setSdkReady(true)
 		})()
 		return () => { try { vapiRef.current?.removeAllListeners?.() } catch {} }
-	}, [])
+	}, [pubKeyInput])
+
+	const savePublicKey = () => {
+		if (!pubKeyInput) return
+		sessionStorage.setItem('vapi_public_key', pubKeyInput)
+		setSdkReady(false)
+		// trigger re-init useEffect
+		setTimeout(() => setPubKeyInput(sessionStorage.getItem('vapi_public_key') || ''), 0)
+	}
 
 	const start = async () => {
 		if (!assistantId || !sdkReady || !vapiRef.current) { alert('Select an agent and ensure SDK key is configured'); return }
@@ -58,6 +66,16 @@ export default function CoachingPage() {
 	return (
 		<Stack spacing={2}>
 			<Typography variant="h6">Coaching</Typography>
+			{!sdkReady && (
+				<Paper variant="outlined" sx={{ p: 2 }}>
+					<Typography variant="subtitle2">Vapi Public Key</Typography>
+					<Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+						<TextField fullWidth placeholder="pk_..." value={pubKeyInput} onChange={e => setPubKeyInput(e.target.value)} />
+						<Button variant="contained" size="small" onClick={savePublicKey} disabled={!pubKeyInput}>Save</Button>
+					</Stack>
+					<Typography variant="caption" color="text.secondary">You can also set VITE_VAPI_PUBLIC_KEY in .env.local and restart dev.</Typography>
+				</Paper>
+			)}
 			<Paper variant="outlined" sx={{ p: 2 }}>
 				<Typography variant="subtitle2">Place Web Call</Typography>
 				<Stack direction="row" spacing={1} sx={{ mt: 1 }}>
@@ -65,8 +83,8 @@ export default function CoachingPage() {
 						<MenuItem value=""><em>Select agent</em></MenuItem>
 						{agentOptions.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
 					</Select>
-					<Button size="small" variant="contained" onClick={start} disabled={!assistantId}>Start</Button>
-					<Button size="small" color="error" variant="outlined" onClick={end} disabled={!assistantId}>End</Button>
+					<Button size="small" variant="contained" onClick={start} disabled={!assistantId || !sdkReady}>Start</Button>
+					<Button size="small" color="error" variant="outlined" onClick={end} disabled={!assistantId || !sdkReady}>End</Button>
 				</Stack>
 			</Paper>
 			<Paper variant="outlined" sx={{ p: 2 }}>

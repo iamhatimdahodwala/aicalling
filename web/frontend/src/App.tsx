@@ -8,6 +8,7 @@ import SchedulePage from './pages/SchedulePage'
 import AppShell from './components/AppShell'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography } from '@mui/material'
+import NumbersPage from './pages/NumbersPage'
 
 function CallDetailRoute() {
 	const id = location.pathname.split('/').pop() as string
@@ -22,6 +23,7 @@ function RoutesWithAnimation() {
 				<Routes location={location}>
 					<Route path="/" element={<CallManagementPage />} />
 					<Route path="/agents" element={<AgentsPage />} />
+					<Route path="/numbers" element={<NumbersPage />} />
 					<Route path="/calls" element={<CallsPage />} />
 					<Route path="/calls/:id" element={<CallDetailRoute />} />
 					<Route path="/call-management" element={<CallManagementPage />} />

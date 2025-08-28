@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Box, Button, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material'
 
 export default function SchedulePage() {
 	const { data: numbers = [] } = useQuery<any[]>({ queryKey: ['numbers'], queryFn: api.listNumbers as any })
+	const { data: agents = [] } = useQuery<any[]>({ queryKey: ['agents'], queryFn: api.listAgents as any })
+	const agentNameById = useMemo(() => Object.fromEntries((agents as any[]).map((a: any) => [a.id, a.name || a.id])), [agents])
 	const [numberId, setNumberId] = useState('')
 	const [associatedAssistant, setAssociatedAssistant] = useState<string>('')
 	const [name, setName] = useState('')
@@ -22,7 +24,6 @@ export default function SchedulePage() {
 
 	const onScheduleSingle = async () => {
 		if (!numberId || !number || !earliest) { alert('Phone number, customer number and earliest time are required'); return }
-		// For now, schedule API still takes assistant_id; use associatedAssistant
 		await api.scheduleSingle({ assistant_id: associatedAssistant, name: name || undefined, number, earliest_at: earliest, latest_at: latest || undefined, context: context || undefined } as any)
 		alert('Call scheduled')
 	}
@@ -48,7 +49,7 @@ export default function SchedulePage() {
 									{(numbers as any[]).map((n: any) => <MenuItem key={n.id} value={n.id}>{n.phoneNumber || n.id}</MenuItem>)}
 								</Select>
 							</div>
-							{associatedAssistant && <Typography variant="body2">Associated assistant: {associatedAssistant}</Typography>}
+							{associatedAssistant && <Typography variant="body2">Associated assistant: {agentNameById[associatedAssistant] || associatedAssistant}</Typography>}
 							<TextField label="Customer Name (optional)" value={name} onChange={e => setName(e.target.value)} placeholder="John Smith" fullWidth />
 							<TextField label="Customer Number" value={number} onChange={e => setNumber(e.target.value)} placeholder="+14155551234" fullWidth />
 							<Stack direction="row" spacing={2}>
@@ -72,6 +73,7 @@ export default function SchedulePage() {
 									{(numbers as any[]).map((n: any) => <MenuItem key={n.id} value={n.id}>{n.phoneNumber || n.id}</MenuItem>)}
 								</Select>
 							</div>
+							{associatedAssistant && <Typography variant="body2">Associated assistant: {agentNameById[associatedAssistant] || associatedAssistant}</Typography>}
 							<input type="file" ref={fileRef} accept=".xlsx" />
 							<Button variant="outlined" onClick={onUpload}>Upload & Schedule</Button>
 						</Stack>

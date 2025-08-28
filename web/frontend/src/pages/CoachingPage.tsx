@@ -16,6 +16,7 @@ export default function CoachingPage() {
 	const vapiRef = useRef<any | null>(null)
 	const [sdkReady, setSdkReady] = useState(false)
 	const [pubKeyInput, setPubKeyInput] = useState(sessionStorage.getItem('vapi_public_key') || '')
+	const [sdkNonce, setSdkNonce] = useState(0)
 
 	useEffect(() => {
 		const publicKey = sessionStorage.getItem('vapi_public_key') || import.meta.env.VITE_VAPI_PUBLIC_KEY
@@ -46,13 +47,14 @@ export default function CoachingPage() {
 			setErrorText(String(e?.message || e))
 		}
 		return () => { try { vapiRef.current?.removeAllListeners?.() } catch {} }
-	}, [pubKeyInput])
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [pubKeyInput, sdkNonce])
 
 	const savePublicKey = () => {
 		if (!pubKeyInput) return
 		sessionStorage.setItem('vapi_public_key', pubKeyInput)
 		setSdkReady(false)
-		setTimeout(() => setPubKeyInput(sessionStorage.getItem('vapi_public_key') || ''), 0)
+		setSdkNonce(n => n + 1)
 	}
 
 	const start = async () => {
@@ -76,6 +78,7 @@ export default function CoachingPage() {
 				<Stack direction="row" spacing={1} sx={{ mt: 1 }}>
 					<TextField fullWidth placeholder="pk_..." value={pubKeyInput} onChange={e => setPubKeyInput(e.target.value)} />
 					<Button variant="contained" size="small" onClick={savePublicKey} disabled={!pubKeyInput}>Save</Button>
+					<Typography variant="caption" sx={{ alignSelf: 'center' }}>SDK: {sdkReady ? 'Ready' : 'Not loaded'}</Typography>
 				</Stack>
 				<Typography variant="caption" color="text.secondary">Ensure your public key allows http://localhost:5173 in the Vapi dashboard or set VITE_VAPI_PUBLIC_KEY in .env.local.</Typography>
 			</Paper>

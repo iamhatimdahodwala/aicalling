@@ -65,26 +65,14 @@ export default function CoachingPage() {
 	const start = async () => {
 		if (!assistantId || !sdkReady || !vapiRef.current) { alert('Select an agent and ensure SDK key is configured'); return }
 		setInsights(''); setLiveTranscript(''); setErrorText('')
-		const shapes = [
-			{ assistant: assistantId },
-			{ assistantId: assistantId },
-			{ assistant: { id: assistantId } },
-		]
-		let lastErr: any = null
-		for (const payload of shapes) {
+		try {
+			const payload = { assistantId }
+			await vapiRef.current.start(payload)
+		} catch (e: any) {
 			try {
-				await vapiRef.current.start(payload)
-				lastErr = null
-				break
-			} catch (e: any) {
-				lastErr = e
-			}
-		}
-		if (lastErr) {
-			try {
-				const msg = lastErr?.error?.message || lastErr?.message
-				setErrorText(Array.isArray(msg) ? msg.join('\n') : (msg ? String(msg) : JSON.stringify(lastErr)))
-			} catch { setErrorText(String(lastErr)) }
+				const msg = e?.error?.message || e?.message
+				setErrorText(Array.isArray(msg) ? msg.join('\n') : (msg ? String(msg) : JSON.stringify(e)))
+			} catch { setErrorText(String(e)) }
 		}
 	}
 	const end = async () => {

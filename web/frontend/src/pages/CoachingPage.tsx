@@ -3,7 +3,6 @@ import { api } from '../lib/api'
 import { Box, Button, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePcmWebSocketAudio } from '../hooks/usePcmWebSocketAudio'
-import Vapi from '@vapi-ai/web'
 
 export default function CoachingPage() {
 	const qc = useQueryClient()
@@ -14,39 +13,42 @@ export default function CoachingPage() {
 	const [whisper, setWhisper] = useState('')
 	const [insights, setInsights] = useState('')
 	const [liveTranscript, setLiveTranscript] = useState('')
-	const vapiRef = useRef<Vapi | null>(null)
+	const vapiRef = useRef<any | null>(null)
 	const [sdkReady, setSdkReady] = useState(false)
 
 	useEffect(() => {
-		const publicKey = sessionStorage.getItem('vapi_public_key') || import.meta.env.VITE_VAPI_PUBLIC_KEY
-		if (!publicKey) { console.warn('Missing VAPI public key: set sessionStorage vapi_public_key or VITE_VAPI_PUBLIC_KEY'); return }
-		const v = new Vapi(publicKey)
-		vapiRef.current = v
-		v.on('call-start', (payload: any) => { setCallId(payload?.id || '') })
-		v.on('message', (m: any) => {
-			// Append transcript-like content
-			try {
-				const role = m?.role || ''
-				const content = m?.content || ''
-				if (content) setLiveTranscript(t => (t ? t + '\n' : '') + `${role}: ${content}`)
-			} catch {}
-		})
-		v.on('call-end', async () => {
-			const transcript = liveTranscript
-			if (transcript) {
-				try { const res: any = await (api as any).compareInsightsTranscript(transcript); setInsights(res.analysis || '') } catch {}
-			}
-			setCallId('')
-			setLiveTranscript('')
-		})
-		setSdkReady(true)
-		return () => { try { v.removeAllListeners() } catch {} }
+		(async () => {
+			const publicKey = sessionStorage.getItem('vapi_public_key') || import.meta.env.VITE_VAPI_PUBLIC_KEY
+			if (!publicKey) { console.warn('Missing VAPI public key: set sessionStorage vapi_public_key or VITE_VAPI_PUBLIC_KEY'); return }
+			// Load from CDN to avoid local package resolution issues
+			const mod = await import(/* @vite-ignore */ 'https://unpkg.com/@vapi-ai/web@latest/dist/index.mjs')
+			const VapiCtor = mod.default
+			const v = new VapiCtor(publicKey)
+			vapiRef.current = v
+			v.on('call-start', (payload: any) => { setCallId(payload?.id || '') })
+			v.on('message', (m: any) => {
+				try {
+					const role = m?.role || ''
+					const content = m?.content || ''
+					if (content) setLiveTranscript(t => (t ? t + '\n' : '') + `${role}: ${content}`)
+				} catch {}
+			})
+			v.on('call-end', async () => {
+				const transcript = liveTranscript
+				if (transcript) {
+					try { const res: any = await (api as any).compareInsightsTranscript(transcript); setInsights(res.analysis || '') } catch {}
+				}
+				setCallId('')
+				setLiveTranscript('')
+			})
+			setSdkReady(true)
+		})()
+		return () => { try { vapiRef.current?.removeAllListeners?.() } catch {} }
 	}, [])
 
 	const start = async () => {
 		if (!assistantId || !sdkReady || !vapiRef.current) { alert('Select an agent and ensure SDK key is configured'); return }
 		setInsights(''); setLiveTranscript('')
-		const selected = agentOptions.find(a => a.id === assistantId)
 		await vapiRef.current.start({ assistantId })
 	}
 	const end = async () => {

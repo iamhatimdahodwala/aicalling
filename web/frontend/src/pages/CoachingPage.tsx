@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Box, Button, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { usePcmWebSocketAudio } from '../hooks/usePcmWebSocketAudio'
+import Vapi from '@vapi-ai/web'
 
 export default function CoachingPage() {
 	const qc = useQueryClient()
@@ -10,27 +10,18 @@ export default function CoachingPage() {
 	const agentOptions = useMemo(() => (agents as any[]).map(a => ({ id: a.id, name: a.name || a.id })), [agents])
 	const [assistantId, setAssistantId] = useState('')
 	const [callId, setCallId] = useState<string>('')
-	const [whisper, setWhisper] = useState('')
 	const [insights, setInsights] = useState('')
 	const [liveTranscript, setLiveTranscript] = useState('')
+	const [errorText, setErrorText] = useState('')
 	const vapiRef = useRef<any | null>(null)
 	const [sdkReady, setSdkReady] = useState(false)
 	const [pubKeyInput, setPubKeyInput] = useState(sessionStorage.getItem('vapi_public_key') || '')
 
 	useEffect(() => {
-		(async () => {
-			const publicKey = sessionStorage.getItem('vapi_public_key') || import.meta.env.VITE_VAPI_PUBLIC_KEY
-			if (!publicKey) { setSdkReady(false); return }
-			let mod: any
-			try {
-				mod = await import(/* @vite-ignore */ 'https://esm.sh/@vapi-ai/web@2.3.9')
-			} catch (e) {
-				console.error('Failed to load Vapi Web SDK from CDN', e)
-				setSdkReady(false)
-				return
-			}
-			const VapiCtor = mod.default
-			const v = new VapiCtor(publicKey)
+		const publicKey = sessionStorage.getItem('vapi_public_key') || import.meta.env.VITE_VAPI_PUBLIC_KEY
+		if (!publicKey) { setSdkReady(false); return }
+		try {
+			const v = new Vapi(publicKey)
 			vapiRef.current = v
 			v.on('call-start', (payload: any) => { setCallId(payload?.id || '') })
 			v.on('message', (m: any) => {
@@ -48,8 +39,12 @@ export default function CoachingPage() {
 				setCallId('')
 				setLiveTranscript('')
 			})
+			v.on('error', (e: any) => { try { setErrorText(JSON.stringify(e)) } catch { setErrorText(String(e)) } })
 			setSdkReady(true)
-		})()
+		} catch (e: any) {
+			setSdkReady(false)
+			setErrorText(String(e?.message || e))
+		}
 		return () => { try { vapiRef.current?.removeAllListeners?.() } catch {} }
 	}, [pubKeyInput])
 
@@ -62,8 +57,12 @@ export default function CoachingPage() {
 
 	const start = async () => {
 		if (!assistantId || !sdkReady || !vapiRef.current) { alert('Select an agent and ensure SDK key is configured'); return }
-		setInsights(''); setLiveTranscript('')
-		await vapiRef.current.start({ assistantId })
+		setInsights(''); setLiveTranscript(''); setErrorText('')
+		try {
+			await vapiRef.current.start({ assistantId })
+		} catch (e: any) {
+			try { setErrorText(JSON.stringify(e)) } catch { setErrorText(String(e)) }
+		}
 	}
 	const end = async () => {
 		try { await vapiRef.current?.stop() } catch {}
@@ -79,7 +78,7 @@ export default function CoachingPage() {
 						<TextField fullWidth placeholder="pk_..." value={pubKeyInput} onChange={e => setPubKeyInput(e.target.value)} />
 						<Button variant="contained" size="small" onClick={savePublicKey} disabled={!pubKeyInput}>Save</Button>
 					</Stack>
-					<Typography variant="caption" color="text.secondary">You can also set VITE_VAPI_PUBLIC_KEY in .env.local and restart dev.</Typography>
+					<Typography variant="caption" color="text.secondary">Ensure your Vapi public key allows origin http://localhost:5173 in the dashboard.</Typography>
 				</Paper>
 			)}
 			<Paper variant="outlined" sx={{ p: 2 }}>
@@ -92,6 +91,7 @@ export default function CoachingPage() {
 					<Button size="small" variant="contained" onClick={start} disabled={!assistantId || !sdkReady}>Start</Button>
 					<Button size="small" color="error" variant="outlined" onClick={end} disabled={!assistantId || !sdkReady}>End</Button>
 				</Stack>
+				{errorText && <Box component="pre" sx={{ whiteSpace: 'pre-wrap', color: 'salmon', mt: 1 }}>{errorText}</Box>}
 			</Paper>
 			<Paper variant="outlined" sx={{ p: 2 }}>
 				<Typography variant="subtitle2">Live Transcript</Typography>

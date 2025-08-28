@@ -21,7 +21,14 @@ export default function CoachingPage() {
 		(async () => {
 			const publicKey = sessionStorage.getItem('vapi_public_key') || import.meta.env.VITE_VAPI_PUBLIC_KEY
 			if (!publicKey) { setSdkReady(false); return }
-			const mod = await import(/* @vite-ignore */ 'https://unpkg.com/@vapi-ai/web@latest/dist/index.mjs')
+			let mod: any
+			try {
+				mod = await import(/* @vite-ignore */ 'https://esm.sh/@vapi-ai/web@2.3.9')
+			} catch (e) {
+				console.error('Failed to load Vapi Web SDK from CDN', e)
+				setSdkReady(false)
+				return
+			}
 			const VapiCtor = mod.default
 			const v = new VapiCtor(publicKey)
 			vapiRef.current = v
@@ -50,7 +57,6 @@ export default function CoachingPage() {
 		if (!pubKeyInput) return
 		sessionStorage.setItem('vapi_public_key', pubKeyInput)
 		setSdkReady(false)
-		// trigger re-init useEffect
 		setTimeout(() => setPubKeyInput(sessionStorage.getItem('vapi_public_key') || ''), 0)
 	}
 
